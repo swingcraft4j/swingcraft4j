@@ -34,6 +34,10 @@
             <artifactId>swingcraft-toast</artifactId>
         </dependency>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>swingcraft-datetime</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.formdev</groupId>
             <artifactId>flatlaf</artifactId>
         </dependency>

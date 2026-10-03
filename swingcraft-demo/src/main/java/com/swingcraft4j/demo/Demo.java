@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * The demo of the modal and the toast, each in its own tab, with a status bar at the bottom.
+ * The demo of the modal, the toast and the date and time pickers, each in its own tab, with a status bar at the bottom.
  */
 public class Demo extends JFrame {
 
@@ -23,6 +23,7 @@ public class Demo extends JFrame {
         tabbedPane.putClientProperty(FlatClientProperties.TABBED_PANE_TRAILING_COMPONENT, createThemeOption());
         tabbedPane.addTab("Modal", new ModalDemo());
         tabbedPane.addTab("Toast", new ToastDemo());
+        tabbedPane.addTab("Date time", new DateTimeDemo());
         // space between the edge of the window and the tabs, the line and the status bar take the whole width
         JPanel contentPane = new JPanel(new MigLayout("fill,insets 0,gapy 0,wrap"));
         contentPane.add(tabbedPane, "grow,push,gap 10 10 10 10");

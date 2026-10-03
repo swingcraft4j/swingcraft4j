@@ -12,6 +12,7 @@
     <modules>
         <module>swingcraft-modal</module>
         <module>swingcraft-toast</module>
+        <module>swingcraft-datetime</module>
         <module>swingcraft-demo</module>
     </modules>
 
@@ -79,6 +80,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>swingcraft-toast</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>swingcraft-datetime</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

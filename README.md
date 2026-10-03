@@ -2,10 +2,11 @@
 
 Java Swing components built on the [FlatLaf](https://github.com/JFormDesigner/FlatLaf) look and feel, for desktop applications.
 
-| Module             | What it gives                                                          | Docs                    |
-|--------------------|------------------------------------------------------------------------|-------------------------|
-| `swingcraft-modal` | Modal dialogs shown inside the window, with animation and a back stack | [Modal](docs/modal.md)  |
-| `swingcraft-toast` | Toast notifications, also for background tasks                         | [Toast](docs/toast.md)  |
+| Module                | What it gives                                                          | Docs                         |
+|-----------------------|------------------------------------------------------------------------|------------------------------|
+| `swingcraft-modal`    | Modal dialogs shown inside the window, with animation and a back stack | [Modal](docs/modal.md)       |
+| `swingcraft-toast`    | Toast notifications, also for background tasks                         | [Toast](docs/toast.md)       |
+| `swingcraft-datetime` | A date picker with a date range, and a time picker with 12 or 24 hours | [Datetime](docs/datetime.md) |
 
 Website: https://www.swingcraft4j.com
 
@@ -14,8 +15,8 @@ Website: https://www.swingcraft4j.com
 - Java 8 or later
 - A FlatLaf look and feel set up before the components are shown
 
-Each module is published on its own. See [Modal](docs/modal.md) and [Toast](docs/toast.md) for the installation
-and the usage.
+Each module is published on its own. See [Modal](docs/modal.md), [Toast](docs/toast.md) and
+[Datetime](docs/datetime.md) for the installation and the usage.
 
 ## Demo
 
