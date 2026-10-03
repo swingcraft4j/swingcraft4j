@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.swingcraft4j</groupId>
+        <artifactId>swingcraft4j</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>swingcraft-demo</artifactId>
+
+    <properties>
+        <maven.compiler.release>8</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the demo is not published, so it is not installed and needs no sources, javadoc and signature -->
+        <maven.install.skip>true</maven.install.skip>
+        <maven.source.skip>true</maven.source.skip>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <gpg.skip>true</gpg.skip>
+    </properties>
+
+    <name>SwingCraft4j Demo</name>
+    <description>The demo of the swingcraft4j modules</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>swingcraft-modal</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>swingcraft-toast</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf-fonts-roboto</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.miglayout</groupId>
+            <artifactId>miglayout-swing</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <resources>
+            <!-- writes the version of the project in demo.properties, the status bar of the demo shows it -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+
+</project>

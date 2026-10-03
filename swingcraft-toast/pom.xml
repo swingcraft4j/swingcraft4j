@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.swingcraft4j</groupId>
+        <artifactId>swingcraft4j</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>swingcraft-toast</artifactId>
+
+    <properties>
+        <maven.compiler.release>8</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <name>SwingCraft4j Toast</name>
+    <description>Animated toast notifications for Java Swing desktop applications, built on the FlatLaf look and feel</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.miglayout</groupId>
+            <artifactId>miglayout-swing</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

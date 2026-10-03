@@ -1,0 +1,48 @@
+### Maven ###
+target/
+.flattened-pom.xml
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+
+### Java ###
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+
+### Signing ###
+*.asc
+*.gpg
+*.sig
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+bin/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+nbactions.xml
+
+### VS Code ###
+.vscode/
+
+### OS ###
+.DS_Store
+Thumbs.db
+desktop.ini
