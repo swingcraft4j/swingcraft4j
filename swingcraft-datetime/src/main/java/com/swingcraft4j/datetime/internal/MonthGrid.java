@@ -10,11 +10,13 @@ import java.time.format.TextStyle;
  */
 final class MonthGrid extends ValueGrid {
 
+    static final int COLUMNS = 3;
+
     private final CalendarPanel calendar;
     private final int year;
 
     MonthGrid(CalendarPanel calendar, int year) {
-        super(3, 4, new Dimension(80, 50), calendar.getOption().getSize());
+        super(COLUMNS, 4, new Dimension(80, 50), calendar.getOption().getSize(), calendar.getOption().getStyleOption());
         this.calendar = calendar;
         this.year = year;
     }
@@ -39,7 +41,13 @@ final class MonthGrid extends ValueGrid {
     }
 
     @Override
+    boolean isCursor(int cell) {
+        return calendar.isCursorShown() && getMonth(cell).equals(calendar.getCursorMonth());
+    }
+
+    @Override
     void cellClicked(int cell) {
+        calendar.cellClicked();
         calendar.monthClicked(getMonth(cell));
     }
 }

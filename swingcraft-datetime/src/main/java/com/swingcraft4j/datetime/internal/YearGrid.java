@@ -8,7 +8,7 @@ import java.time.Year;
  */
 final class YearGrid extends ValueGrid {
 
-    private static final int COLUMNS = 4;
+    static final int COLUMNS = 4;
     private static final int ROWS = 5;
     /**
      * How many years a page has.
@@ -22,9 +22,16 @@ final class YearGrid extends ValueGrid {
      * @param year a year of the page
      */
     YearGrid(CalendarPanel calendar, int year) {
-        super(COLUMNS, ROWS, new Dimension(60, 40), calendar.getOption().getSize());
+        super(COLUMNS, ROWS, new Dimension(60, 40), calendar.getOption().getSize(), calendar.getOption().getStyleOption());
         this.calendar = calendar;
-        this.firstYear = year - Math.floorMod(year, YEARS);
+        this.firstYear = getFirstYear(year);
+    }
+
+    /**
+     * @return the first year of the page the year is on
+     */
+    static int getFirstYear(int year) {
+        return year - Math.floorMod(year, YEARS);
     }
 
     int getFirstYear() {
@@ -47,7 +54,13 @@ final class YearGrid extends ValueGrid {
     }
 
     @Override
+    boolean isCursor(int cell) {
+        return calendar.isCursorShown() && firstYear + cell == calendar.getCursorYear();
+    }
+
+    @Override
     void cellClicked(int cell) {
+        calendar.cellClicked();
         calendar.yearClicked(firstYear + cell);
     }
 }

@@ -2,6 +2,7 @@ package com.swingcraft4j.demo;
 
 import com.swingcraft4j.datetime.DateField;
 import com.swingcraft4j.datetime.DatePicker;
+import com.swingcraft4j.datetime.DatePreset;
 import com.swingcraft4j.datetime.DateRange;
 import com.swingcraft4j.datetime.DateRangeField;
 import com.swingcraft4j.datetime.DateSelectionEvent;
@@ -14,6 +15,7 @@ import com.swingcraft4j.datetime.option.DateOption;
 import com.swingcraft4j.datetime.option.DateSelectionMode;
 import com.swingcraft4j.datetime.option.FieldOption;
 import com.swingcraft4j.datetime.option.PickerSize;
+import com.swingcraft4j.datetime.option.StyleOption;
 import com.swingcraft4j.datetime.option.TimeOption;
 import net.miginfocom.swing.MigLayout;
 
@@ -63,6 +65,7 @@ public class DateTimeDemo extends JPanel {
     private JCheckBox chDateAnimation;
     private JSpinner dateDuration;
     private JCheckBox chDateEnabled;
+    private JCheckBox chPresets;
     private JComboBox<String> dateValidation;
     private final Map<String, Predicate<LocalDate>> dateRules = new LinkedHashMap<>();
 
@@ -75,28 +78,42 @@ public class DateTimeDemo extends JPanel {
     private JComboBox<String> timeValidation;
     private final Map<String, Predicate<LocalTime>> timeRules = new LinkedHashMap<>();
 
+    private ColorOption styleColor;
+    private ColorOption styleBackground;
+    private ColorOption styleClockBackground;
+    private ColorOption styleWeekendColor;
+    private JSpinner styleSelectionRound;
+    private JSpinner stylePadding;
+    private JCheckBox chOutsideDays;
+    private JCheckBox chToday;
+
     private JComboBox<String> datePattern;
     private JComboBox<String> timePattern;
     private JCheckBox chPickerButton;
     private JCheckBox chClearButton;
+    private JCheckBox chStableWidth;
     private JCheckBox chFieldEnabled;
     private JCheckBox chValidation;
     private JComboBox<CommitMode> commitMode;
 
     public DateTimeDemo() {
-        // the options of both pickers one below the other at the left, the two pickers next to them, and
-        // the fields at the right. A picker has its own size, so its group is as large as the selected
+        // the options of both pickers one below the other at the left, the two pickers with their style next
+        // to them, and the fields at the right. A picker has its own size, so its group is as large as the selected
         // size needs
-        setLayout(new MigLayout("", "[fill," + OPTION_WIDTH + "::][fill][fill][fill," + OPTION_WIDTH + "::]", "[top][top]"));
+        setLayout(new MigLayout("", "[fill," + OPTION_WIDTH + "::][fill][fill," + OPTION_WIDTH + "::]", "[top][top]"));
         add(createDateOption(), "cell 0 0");
         add(createTimeOption(), "cell 0 1");
-        add(createDatePicker(), "cell 1 0,spany 2");
-        add(createTimePicker(), "cell 2 0,spany 2");
+        // the two pickers next to each other, and below them the style of both
+        JPanel pickers = new JPanel(new MigLayout("insets 0", "[fill][fill]", "[top][top]"));
+        pickers.add(createDatePicker(), "cell 0 0");
+        pickers.add(createTimePicker(), "cell 1 0");
+        pickers.add(createStyleOption(), "cell 0 1,spanx 2");
+        add(pickers, "cell 1 0,spany 2");
         // the fields and their options are one below the other, whatever the height of the groups at the left is
         JPanel fields = new JPanel(new MigLayout("wrap,fillx,insets 0", "[fill]"));
         fields.add(createFieldOption());
         fields.add(createFields());
-        add(fields, "cell 3 0,spany 2");
+        add(fields, "cell 2 0,spany 2");
     }
 
     private Component createDateOption() {
@@ -121,6 +138,8 @@ public class DateTimeDemo extends JPanel {
         chDateAnimation = new JCheckBox("Animation enable", true);
         dateDuration = DemoUtils.createSpinner(300, 0, 5000, 50);
         chDateEnabled = new JCheckBox("Enabled", true);
+        chPresets = new JCheckBox("Presets");
+        chPresets.addActionListener(e -> applyDateOption());
         // which dates can be selected in the picker, null for all
         dateRules.put("None", null);
         dateRules.put("No weekend", date -> !isWeekend(date));
@@ -137,6 +156,7 @@ public class DateTimeDemo extends JPanel {
         DemoUtils.addRow(panel, "Duration", dateDuration);
         panel.add(chDateAnimation, "span 2");
         panel.add(chDateCloseOnSelect, "span 2");
+        panel.add(chPresets, "span 2");
         panel.add(chDateEnabled, "span 2");
         for (Component component : panelMode.getComponents()) {
             ((JRadioButton) component).addActionListener(e -> applyDateOption());
@@ -193,6 +213,58 @@ public class DateTimeDemo extends JPanel {
         return panel;
     }
 
+    // the style of both pickers, and of the pickers in the popups of the fields
+    private Component createStyleOption() {
+        JPanel panel = DemoUtils.createGroup("Style option", "wrap 4,fillx", "[][grow,fill,75::][][grow,fill,75::]", "");
+        styleColor = new ColorOption();
+        styleBackground = new ColorOption();
+        styleClockBackground = new ColorOption();
+        styleWeekendColor = new ColorOption();
+        styleSelectionRound = DemoUtils.createSpinner(999, 0, 999, 1);
+        stylePadding = DemoUtils.createSpinner(10, 0, 50, 1);
+        chOutsideDays = new JCheckBox("Outside days", true);
+        chToday = new JCheckBox("Today", true);
+        DemoUtils.addRow(panel, "Color", styleColor);
+        DemoUtils.addRow(panel, "Weekend", styleWeekendColor);
+        DemoUtils.addRow(panel, "Background", styleBackground);
+        DemoUtils.addRow(panel, "Clock", styleClockBackground);
+        DemoUtils.addRow(panel, "Round", styleSelectionRound);
+        DemoUtils.addRow(panel, "Padding", stylePadding);
+        panel.add(chOutsideDays, "span 2");
+        panel.add(chToday, "span 2");
+        for (ColorOption color : new ColorOption[]{styleColor, styleBackground, styleClockBackground, styleWeekendColor}) {
+            color.addActionListener(e -> applyStyle());
+        }
+        styleSelectionRound.addChangeListener(e -> applyStyle());
+        stylePadding.addChangeListener(e -> applyStyle());
+        chOutsideDays.addActionListener(e -> applyStyle());
+        chToday.addActionListener(e -> applyStyle());
+        return panel;
+    }
+
+    private StyleOption readStyleOption() {
+        return new StyleOption()
+                .setColor(styleColor.getColor())
+                .setBackground(styleBackground.getColor())
+                .setClockBackground(styleClockBackground.getColor())
+                .setWeekendColor(styleWeekendColor.getColor())
+                .setSelectionRound(DemoUtils.intValue(styleSelectionRound))
+                .setPadding(DemoUtils.intValue(stylePadding))
+                .setShowOutsideDays(chOutsideDays.isSelected())
+                .setShowToday(chToday.isSelected());
+    }
+
+    // the style is a part of the options of both pickers
+    private void applyStyle() {
+        DateOption dateOption = readDateOption();
+        datePicker.setOption(dateOption);
+        datePopup.setOption(dateOption);
+        TimeOption timeOption = readTimeOption();
+        timePicker.setOption(timeOption);
+        timePopup.setOption(timeOption);
+        applyFieldOption();
+    }
+
     private Component createFieldOption() {
         JPanel panel = createOptionGroup("Field option");
         datePattern = new JComboBox<>(new String[]{"dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd", "dd MMM yy", "EEEE dd MMMM yyyy"});
@@ -201,12 +273,15 @@ public class DateTimeDemo extends JPanel {
         chClearButton = new JCheckBox("Clear button");
         chFieldEnabled = new JCheckBox("Enabled", true);
         chValidation = new JCheckBox("Validation");
+        chStableWidth = new JCheckBox("Stable width");
+        chStableWidth.addActionListener(e -> applyFieldOption());
         commitMode = new JComboBox<>(CommitMode.values());
         DemoUtils.addRow(panel, "Date", datePattern);
         DemoUtils.addRow(panel, "Time", timePattern);
         DemoUtils.addRow(panel, "Commit", commitMode);
         panel.add(chPickerButton, "span 2");
         panel.add(chClearButton, "span 2");
+        panel.add(chStableWidth, "span 2");
         panel.add(chValidation, "span 2");
         panel.add(chFieldEnabled, "span 2");
         commitMode.addActionListener(e -> applyFieldOption());
@@ -376,7 +451,9 @@ public class DateTimeDemo extends JPanel {
                 .setFirstDayOfWeek((DayOfWeek) firstDayOfWeek.getSelectedItem())
                 .setLocale(locales.get((String) locale.getSelectedItem()))
                 .setCloseOnSelect(chDateCloseOnSelect.isSelected())
-                .setSelectable(dateRules.get((String) dateValidation.getSelectedItem()));
+                .setSelectable(dateRules.get((String) dateValidation.getSelectedItem()))
+                .setPresets(chPresets.isSelected() ? DatePreset.defaults() : null)
+                .setStyleOption(readStyleOption());
         option.getAnimationOption()
                 .setEnabled(chDateAnimation.isSelected())
                 .setDuration(DemoUtils.intValue(dateDuration));
@@ -395,7 +472,8 @@ public class DateTimeDemo extends JPanel {
                 .setHour24(chHour24.isSelected())
                 .setSize((PickerSize) timeSize.getSelectedItem())
                 .setCloseOnSelect(chTimeCloseOnSelect.isSelected())
-                .setSelectable(timeRules.get((String) timeValidation.getSelectedItem()));
+                .setSelectable(timeRules.get((String) timeValidation.getSelectedItem()))
+                .setStyleOption(readStyleOption());
         option.getAnimationOption()
                 .setEnabled(chTimeAnimation.isSelected())
                 .setDuration(DemoUtils.intValue(timeDuration));
@@ -410,6 +488,7 @@ public class DateTimeDemo extends JPanel {
                 .setLocale(locales.get((String) locale.getSelectedItem()))
                 .setShowPickerButton(chPickerButton.isSelected())
                 .setShowClearButton(chClearButton.isSelected())
+                .setStableWidth(chStableWidth.isSelected())
                 .setCommitMode((CommitMode) commitMode.getSelectedItem())
                 .setDateOption(readDateOption().setCloseOnSelect(true))
                 .setTimeOption(readTimeOption().setCloseOnSelect(true));

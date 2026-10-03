@@ -4,7 +4,6 @@ import com.formdev.flatlaf.util.ColorFunctions;
 import com.swingcraft4j.datetime.DateRange;
 
 import java.awt.*;
-import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.time.DayOfWeek;
@@ -20,23 +19,24 @@ final class DayGrid extends CellGrid {
 
     private static final int DAYS = 7;
     private static final int WEEKS = 6;
-    // the space around the circle of a selected day
+    // the space around the shape of a selected day
     private static final float CELL_PADDING = 2;
     // the line around today
     private static final float OUTLINE_WIDTH = 1.3f;
-    // from the edge of the circle to the line when today is selected
+    // from the edge of the shape to the line when today is selected
     private static final float OUTLINE_GAP = 2.2f;
 
     private final CalendarPanel calendar;
     private final YearMonth month;
     private final LocalDate firstDate;
+    private final DayOfWeek firstDay;
     private final String[] dayNames = new String[DAYS];
 
     DayGrid(CalendarPanel calendar, YearMonth month) {
-        super(DAYS, WEEKS + 1, new Dimension(38, 34), calendar.getOption().getSize());
+        super(DAYS, WEEKS + 1, new Dimension(38, 34), calendar.getOption().getSize(), calendar.getOption().getStyleOption());
         this.calendar = calendar;
         this.month = month;
-        DayOfWeek firstDay = calendar.getOption().getFirstDayOfWeek();
+        firstDay = calendar.getOption().getFirstDayOfWeek();
         LocalDate first = month.atDay(1);
         firstDate = first.minusDays((first.getDayOfWeek().getValue() - firstDay.getValue() + DAYS) % DAYS);
         for (int i = 0; i < DAYS; i++) {
@@ -52,14 +52,28 @@ final class DayGrid extends CellGrid {
         return firstDate.plusDays(cell - DAYS);
     }
 
+    // false for a day of the month before or after, if the style leaves them out
+    private boolean isShown(LocalDate date) {
+        return getStyle().isShowOutsideDays() || YearMonth.from(date).equals(month);
+    }
+
+    private static boolean isWeekend(DayOfWeek day) {
+        return day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY;
+    }
+
     @Override
     boolean isCellEnabled(int cell) {
         // the first row has the names of the days
-        return cell >= DAYS && calendar.getOption().isSelectable(getDate(cell));
+        if (cell < DAYS) {
+            return false;
+        }
+        LocalDate date = getDate(cell);
+        return isShown(date) && calendar.getOption().isSelectable(date);
     }
 
     @Override
     void cellClicked(int cell) {
+        calendar.cellClicked();
         calendar.dateClicked(getDate(cell));
     }
 
@@ -73,41 +87,52 @@ final class DayGrid extends CellGrid {
 
     @Override
     void paintCell(Graphics2D g, int cell, Rectangle2D.Float bounds, boolean hover, boolean pressed) {
+        Color weekendColor = getStyle().getWeekendColor();
         if (cell < DAYS) {
-            g.setColor(PickerUtils.disabledForeground());
+            boolean weekend = weekendColor != null && isEnabled() && isWeekend(firstDay.plus(cell));
+            g.setColor(weekend ? weekendColor : PickerUtils.disabledForeground());
             PickerUtils.paintText(g, dayNames[cell], bounds);
             return;
         }
         LocalDate date = getDate(cell);
+        if (!isShown(date)) {
+            return;
+        }
         DateSelection selection = calendar.getSelection();
         boolean selected = selection.isSelectedDate(date);
-        Ellipse2D.Float circle = getCircle(bounds);
+        RoundRectangle2D.Float shape = getSelectionShape(bounds);
         Color background = selected ? getSelectedBackground(hover, pressed) : getCellBackground(hover, pressed);
         if (background != null) {
             g.setColor(background);
-            g.fill(circle);
+            g.fill(shape);
         }
-        if (date.equals(LocalDate.now())) {
-            PickerUtils.paintCurrentMark(g, circle, selected, scale(OUTLINE_WIDTH), scale(OUTLINE_GAP));
+        if (getStyle().isShowToday() && date.equals(LocalDate.now())) {
+            PickerUtils.paintCurrentMark(g, shape, selected, scale(OUTLINE_WIDTH), scale(OUTLINE_GAP), getAccentColor());
+        }
+        if (calendar.isCursorShown() && date.equals(calendar.getCursorDate())) {
+            PickerUtils.paintCursor(g, shape, scale(1));
         }
         if (selected) {
-            g.setColor(PickerUtils.accentForeground());
+            g.setColor(PickerUtils.accentForeground(getAccentColor()));
         } else if (!isEnabled() || !YearMonth.from(date).equals(month) || !calendar.getOption().isSelectable(date)) {
             g.setColor(PickerUtils.disabledForeground());
+        } else if (weekendColor != null && isWeekend(date.getDayOfWeek())) {
+            g.setColor(weekendColor);
         } else {
             g.setColor(PickerUtils.foreground());
         }
         PickerUtils.paintText(g, String.valueOf(date.getDayOfMonth()), bounds);
     }
 
-    // the circle of a selected day
-    private Ellipse2D.Float getCircle(Rectangle2D.Float bounds) {
+    // the shape of a selected day: a square in the middle of the cell, with the round corners of the style
+    private RoundRectangle2D.Float getSelectionShape(Rectangle2D.Float bounds) {
         float size = Math.min(bounds.width, bounds.height) - scale(CELL_PADDING) * 2;
-        return new Ellipse2D.Float((float) bounds.getCenterX() - size / 2, (float) bounds.getCenterY() - size / 2, size, size);
+        float arc = getSelectionArc(size);
+        return new RoundRectangle2D.Float((float) bounds.getCenterX() - size / 2, (float) bounds.getCenterY() - size / 2, size, size, arc, arc);
     }
 
-    // the band behind the days of a range: one for each week, round at its two ends. A band is one shape,
-    // the bands of single cells would show a line between them on a scaled screen
+    // the band behind the days of a range: one for each week, with the shape of a selected day at its two
+    // ends. A band is one shape, the bands of single cells would show a line between them on a scaled screen
     @Override
     void paintBackground(Graphics2D g) {
         DateSelection selection = calendar.getSelection();
@@ -119,19 +144,22 @@ final class DayGrid extends CellGrid {
         // a range that waits for its end is shown lighter than a selected one
         g.setColor(selection.isSelecting()
                 ? PickerUtils.shade(background, 0.05f)
-                : ColorFunctions.mix(PickerUtils.accentColor(), background, 0.2f));
+                : ColorFunctions.mix(getAccentColor(), background, 0.2f));
         for (int week = 1; week <= WEEKS; week++) {
             int first = -1;
             int last = -1;
             for (int cell = week * DAYS; cell < (week + 1) * DAYS; cell++) {
-                if (range.contains(getDate(cell))) {
+                LocalDate date = getDate(cell);
+                if (range.contains(date) && isShown(date)) {
                     first = first == -1 ? cell : first;
                     last = cell;
                 }
             }
             if (first != -1) {
-                Rectangle2D shape = getCircle(getCellBounds(first)).getBounds2D().createUnion(getCircle(getCellBounds(last)).getBounds2D());
-                g.fill(new RoundRectangle2D.Double(shape.getX(), shape.getY(), shape.getWidth(), shape.getHeight(), shape.getHeight(), shape.getHeight()));
+                RoundRectangle2D.Float start = getSelectionShape(getCellBounds(first));
+                Rectangle2D band = start.getBounds2D().createUnion(getSelectionShape(getCellBounds(last)).getBounds2D());
+                g.fill(new RoundRectangle2D.Double(band.getX(), band.getY(), band.getWidth(), band.getHeight(),
+                        start.arcwidth, start.archeight));
             }
         }
     }

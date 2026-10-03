@@ -25,8 +25,11 @@ final class PickerButton extends JButton {
     private int paddingY = 4;
     private boolean filled;
     private boolean circle;
+    private boolean leading;
     private String widthText;
     private PickerSize size = PickerSize.DEFAULT;
+    // the color of the style for a selected button, null for the accent color of the look and feel
+    private Color accentColor;
 
     PickerButton() {
         setFocusable(false);
@@ -69,6 +72,14 @@ final class PickerButton extends JButton {
     }
 
     /**
+     * Puts the text at the leading side of the button, and not in its center.
+     */
+    PickerButton leading() {
+        this.leading = true;
+        return this;
+    }
+
+    /**
      * @param widthText a text the button is at least as wide as, so it keeps its width when its text changes
      */
     PickerButton minimumText(String widthText) {
@@ -79,6 +90,15 @@ final class PickerButton extends JButton {
     void setPickerSize(PickerSize size) {
         this.size = size;
         revalidate();
+        repaint();
+    }
+
+    /**
+     * @param accentColor the color of the button when it is selected, or null for the accent color of the
+     *                    look and feel
+     */
+    void setAccentColor(Color accentColor) {
+        this.accentColor = accentColor;
         repaint();
     }
 
@@ -141,7 +161,7 @@ final class PickerButton extends JButton {
             boolean pressed = isEnabled() && model.isArmed() && model.isPressed();
             Color color = null;
             if (isSelected()) {
-                color = ColorFunctions.mix(PickerUtils.accentColor(), background, isEnabled() ? 0.18f : 0.08f);
+                color = ColorFunctions.mix(PickerUtils.accentColor(accentColor), background, isEnabled() ? 0.18f : 0.08f);
             } else if (hover || pressed || filled) {
                 color = PickerUtils.shade(background, pressed ? 0.12f : hover ? 0.08f : 0.05f);
             }
@@ -159,10 +179,19 @@ final class PickerButton extends JButton {
             if (!isEnabled()) {
                 g2.setColor(PickerUtils.disabledForeground());
             } else {
-                g2.setColor(isSelected() ? PickerUtils.accentColor() : PickerUtils.foreground());
+                g2.setColor(isSelected() ? PickerUtils.accentColor(accentColor) : PickerUtils.foreground());
             }
             g2.setFont(getFont());
-            PickerUtils.paintText(g2, getText() != null ? getText() : "", new Rectangle2D.Float(0, 0, getWidth(), getHeight()));
+            String text = getText() != null ? getText() : "";
+            Rectangle2D.Float bounds = new Rectangle2D.Float(0, 0, getWidth(), getHeight());
+            if (leading) {
+                // as wide as the text, at the padding of the leading side
+                float width = g2.getFontMetrics().stringWidth(text);
+                float padding = PickerUtils.scale(size, paddingX);
+                bounds.x = getComponentOrientation().isLeftToRight() ? padding : getWidth() - padding - width;
+                bounds.width = width;
+            }
+            PickerUtils.paintText(g2, text, bounds);
         } finally {
             g2.dispose();
         }

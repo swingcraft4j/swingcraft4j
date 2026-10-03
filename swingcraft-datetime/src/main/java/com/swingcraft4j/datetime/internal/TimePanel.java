@@ -6,12 +6,20 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalTime;
 
 /**
  * The view of a time picker: a header with the hour and the minute, and below it the clock. The clock shows
  * the hours first, and the minutes when an hour is selected. The header selects which of them is shown,
  * and AM or PM for a clock with 12 hours.
+ * <p>
+ * With the focus, the keyboard changes the time: up and down make the hour or the minute larger and
+ * smaller, left and right show the hours or the minutes, enter or space goes on from the hours to the
+ * minutes, and A and P select AM and PM.
  */
 public final class TimePanel extends JPanel {
 
@@ -69,6 +77,80 @@ public final class TimePanel extends JPanel {
         add(clock);
         applySize();
         update(false);
+        installKeys();
+    }
+
+    private void installKeys() {
+        setFocusable(true);
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (isEnabled() && !e.isAltDown() && !e.isControlDown() && !e.isMetaDown() && handleKey(e.getKeyCode())) {
+                    e.consume();
+                }
+            }
+        });
+        // a click on the clock gives the panel the focus, so the keyboard goes on from the time
+        clock.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                requestFocusInWindow();
+            }
+        });
+    }
+
+    // true if the key was used
+    private boolean handleKey(int code) {
+        switch (code) {
+            case KeyEvent.VK_UP:
+                adjust(1);
+                return true;
+            case KeyEvent.VK_DOWN:
+                adjust(-1);
+                return true;
+            case KeyEvent.VK_LEFT:
+            case KeyEvent.VK_RIGHT:
+                showView(!hourView);
+                return true;
+            case KeyEvent.VK_ENTER:
+            case KeyEvent.VK_SPACE:
+                clockSelected();
+                return true;
+            case KeyEvent.VK_A:
+            case KeyEvent.VK_P:
+                if (!option.isHour24()) {
+                    setPm(code == KeyEvent.VK_P);
+                }
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    // the next hour or minute that can be selected, in the direction of the amount. After the last comes
+    // the first: the hours of a clock with 12 hours stay in their half of the day
+    private void adjust(int amount) {
+        LocalTime base = time != null ? time : LocalTime.of(pm ? 12 : 0, 0);
+        int count = hourView ? (option.isHour24() ? 24 : 12) : 60;
+        for (int step = 1; step <= count; step++) {
+            LocalTime next;
+            if (!hourView) {
+                next = base.withMinute(Math.floorMod(base.getMinute() + amount * step, 60));
+                next = option.isSelectable(next) ? next : null;
+            } else if (option.isHour24()) {
+                next = findSelectable(base.withHour(Math.floorMod(base.getHour() + amount * step, 24)));
+            } else {
+                int half = base.getHour() >= 12 ? 12 : 0;
+                next = findSelectable(base.withHour(half + Math.floorMod(base.getHour() - half + amount * step, 12)));
+            }
+            if (next != null) {
+                time = next;
+                pm = time.getHour() >= 12;
+                update(false);
+                listener.timeChanged();
+                return;
+            }
+        }
     }
 
     private Component createHeader() {
@@ -98,7 +180,7 @@ public final class TimePanel extends JPanel {
         return panel;
     }
 
-    // the size of the picker: the text of the header and the clock
+    // the size and the style of the picker: the text of the header, the clock and the colors
     private void applySize() {
         // the space between the header and the clock is smaller in a smaller picker
         ((MigLayout) getLayout()).setLayoutConstraints(
@@ -109,6 +191,12 @@ public final class TimePanel extends JPanel {
         buttonPm.setPickerSize(option.getSize());
         separator.setFont(PickerUtils.font(option.getSize(), TIME_FONT_SIZE));
         clock.setPickerSize(option.getSize());
+        Color accentColor = option.getStyleOption().getColor();
+        buttonHour.setAccentColor(accentColor);
+        buttonMinute.setAccentColor(accentColor);
+        buttonAm.setAccentColor(accentColor);
+        buttonPm.setAccentColor(accentColor);
+        clock.setStyle(option.getStyleOption());
     }
 
     /**
@@ -156,23 +244,45 @@ public final class TimePanel extends JPanel {
     }
 
     private void setPm(boolean pm) {
-        this.pm = pm;
         if (time != null && pm != time.getHour() >= 12) {
-            time = time.withHour((time.getHour() + 12) % 24);
+            // the same time in the other half of the day, or the first minute of its hour that can be
+            // selected. If the hour has none, AM and PM stay as they are
+            LocalTime selected = findSelectable(time.withHour((time.getHour() + 12) % 24));
+            if (selected == null) {
+                update(false);
+                return;
+            }
+            this.pm = pm;
+            time = selected;
             update(false);
             listener.timeChanged();
         } else {
+            this.pm = pm;
             update(false);
         }
+    }
+
+    // the time if it can be selected, or the first minute of its hour that can. Null if the hour has none
+    private LocalTime findSelectable(LocalTime time) {
+        if (option.isSelectable(time)) {
+            return time;
+        }
+        for (int minute = 0; minute < 60; minute++) {
+            LocalTime other = time.withMinute(minute);
+            if (option.isSelectable(other)) {
+                return other;
+            }
+        }
+        return null;
     }
 
     // the user has moved the hand of the clock
     private void clockChanged(int value) {
         if (hourView) {
             // the minute stays if it can, or the hour gets its first minute that can be selected
-            LocalTime selected = LocalTime.of(value, time != null ? time.getMinute() : 0);
-            for (int minute = 0; minute < 60 && !option.isSelectable(selected); minute++) {
-                selected = LocalTime.of(value, minute);
+            LocalTime selected = findSelectable(LocalTime.of(value, time != null ? time.getMinute() : 0));
+            if (selected == null) {
+                return;
             }
             time = selected;
         } else {

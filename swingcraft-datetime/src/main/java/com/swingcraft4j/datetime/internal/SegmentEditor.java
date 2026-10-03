@@ -44,6 +44,7 @@ public final class SegmentEditor {
     private final Set<SegmentType> types = EnumSet.noneOf(SegmentType.class);
     private final String[] amPm;
     private int selected = NONE;
+    private boolean stableWidth;
 
     /**
      * @param listener runs after each change of a value or of the selection
@@ -259,24 +260,44 @@ public final class SegmentEditor {
     }
 
     /**
+     * @param stableWidth true to give the name of a month or a day the space of the longest name, so the
+     *                    field keeps its width. False for the space of the name that is shown
+     */
+    public void setStableWidth(boolean stableWidth) {
+        this.stableWidth = stableWidth;
+    }
+
+    /**
      * @return the texts that give the width of the segment: its space is as wide as the widest of them.
      * A number has the space of its widest digits, so the field keeps its width while it is typed.
-     * The name of a month or a day has the space of the name that is shown: with the space of the longest
-     * name, the field would be much wider than its text most of the time
+     * The name of a month or a day has the space of the name that is shown, or of the longest name if the
+     * width is stable
      */
     List<String> getTexts(Segment segment) {
         List<String> texts = new ArrayList<>();
         texts.add(getText(segment));
         switch (segment.getType()) {
             case LITERAL:
+                break;
             case WEEKDAY:
+                if (stableWidth) {
+                    for (DayOfWeek day : DayOfWeek.values()) {
+                        texts.add(getDayName(segment, day));
+                    }
+                }
                 break;
             case AM_PM:
                 texts.add(amPm[0]);
                 texts.add(amPm[1]);
                 break;
             default:
-                if (!segment.isName()) {
+                if (segment.isName()) {
+                    if (stableWidth) {
+                        for (Month month : Month.values()) {
+                            texts.add(getMonthName(segment, month));
+                        }
+                    }
+                } else {
                     texts.add(placeholder(segment));
                     // the widest digit is not the same in every font
                     int digits = Math.max(segment.getDigits(), segment.getPattern().length());

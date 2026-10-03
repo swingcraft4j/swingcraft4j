@@ -16,10 +16,16 @@ public final class PickerPopup {
 
     private final JComponent picker;
     private JPopupMenu popupMenu;
+    // the look and feel the picker was made or updated with last
     private LookAndFeel lookAndFeel;
 
+    /**
+     * @param picker the picker of the popup. The popup is made with it, so it knows the look and feel
+     *               the picker was made with
+     */
     public PickerPopup(JComponent picker) {
         this.picker = picker;
+        this.lookAndFeel = UIManager.getLookAndFeel();
     }
 
     /**
@@ -37,11 +43,10 @@ public final class PickerPopup {
             // the picker was added to another container after the popup was closed
             popupMenu.add(picker);
         }
-        // the components of a popup that is not showing are not updated when the look and feel changes
+        // a picker that is not in a window is not updated when the look and feel changes: not while its
+        // popup is closed, and not before its popup is shown the first time
         if (lookAndFeel != UIManager.getLookAndFeel()) {
-            if (lookAndFeel != null) {
-                SwingUtilities.updateComponentTreeUI(popupMenu);
-            }
+            SwingUtilities.updateComponentTreeUI(popupMenu);
             lookAndFeel = UIManager.getLookAndFeel();
         }
         Point location = getLocation(invoker);

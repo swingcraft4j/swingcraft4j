@@ -1,7 +1,9 @@
 package com.swingcraft4j.datetime.internal;
 
 import com.formdev.flatlaf.ui.FlatUIUtils;
+import com.formdev.flatlaf.util.UIScale;
 import com.swingcraft4j.datetime.option.PickerSize;
+import com.swingcraft4j.datetime.option.StyleOption;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,6 +23,7 @@ abstract class CellGrid extends JComponent {
     private final int rows;
     private final Dimension cellSize;
     private final PickerSize size;
+    private final StyleOption style;
     // the cell under the mouse, -1 for none
     private int hoverCell = -1;
     private int pressedCell = -1;
@@ -28,12 +31,14 @@ abstract class CellGrid extends JComponent {
     /**
      * @param cellSize the preferred size of a cell with {@link PickerSize#MEDIUM}, it is scaled
      * @param size     the size of the picker
+     * @param style    the style of the picker
      */
-    CellGrid(int columns, int rows, Dimension cellSize, PickerSize size) {
+    CellGrid(int columns, int rows, Dimension cellSize, PickerSize size, StyleOption style) {
         this.columns = columns;
         this.rows = rows;
         this.cellSize = cellSize;
         this.size = size;
+        this.style = style;
         MouseAdapter mouse = new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
@@ -165,8 +170,24 @@ abstract class CellGrid extends JComponent {
      * @return the accent color of a selected cell, a little darker or lighter while the mouse is on it
      */
     Color getSelectedBackground(boolean hover, boolean pressed) {
-        Color color = PickerUtils.accentColor();
+        Color color = getAccentColor();
         return hover || pressed ? PickerUtils.shade(color, pressed ? 0.1f : 0.05f) : color;
+    }
+
+    StyleOption getStyle() {
+        return style;
+    }
+
+    Color getAccentColor() {
+        return PickerUtils.accentColor(style.getColor());
+    }
+
+    /**
+     * @param height the height of the shape of a selected cell
+     * @return the corner arc diameter of the shape: the one of the style, a half circle at most
+     */
+    float getSelectionArc(float height) {
+        return Math.min(UIScale.scale((float) style.getSelectionRound()), height);
     }
 
     /**

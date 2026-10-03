@@ -2,6 +2,7 @@ package com.swingcraft4j.datetime;
 
 import com.swingcraft4j.datetime.internal.PickerPopup;
 import com.swingcraft4j.datetime.internal.TimePanel;
+import com.swingcraft4j.datetime.option.StyleOption;
 import com.swingcraft4j.datetime.option.TimeOption;
 import net.miginfocom.swing.MigLayout;
 
@@ -51,8 +52,9 @@ public class TimePicker extends JPanel {
                 }
             }
         });
-        setLayout(new MigLayout("fill,insets 10", "[fill]", "[fill]"));
+        setLayout(new MigLayout("fill", "[fill]", "[fill]"));
         add(timePanel);
+        applyStyle();
     }
 
     /**
@@ -73,6 +75,7 @@ public class TimePicker extends JPanel {
         }
         this.option = option.copy();
         timePanel.setOption(this.option);
+        applyStyle();
     }
 
     /**
@@ -131,6 +134,26 @@ public class TimePicker extends JPanel {
 
     public boolean isPopupVisible() {
         return popup.isVisible();
+    }
+
+    // the background and the space around the content
+    private void applyStyle() {
+        StyleOption style = option.getStyleOption();
+        Insets padding = style.getPadding();
+        ((MigLayout) getLayout()).setLayoutConstraints(
+                "fill,insets " + padding.top + " " + padding.left + " " + padding.bottom + " " + padding.right);
+        // the color of the look and feel changes with the look and feel, as it did before
+        setBackground(style.getBackground() != null ? style.getBackground() : UIManager.getColor("Panel.background"));
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Gives the focus to the clock, so the keyboard changes its time.
+     */
+    @Override
+    public boolean requestFocusInWindow() {
+        return timePanel.requestFocusInWindow();
     }
 
     @Override

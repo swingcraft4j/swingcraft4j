@@ -13,6 +13,7 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * The colors and the painting that the date picker and the time picker have in common.
@@ -55,13 +56,29 @@ final class PickerUtils {
      * @param shape an ellipse or a rectangle with round corners
      */
     static void paintOutline(Graphics2D g, RectangularShape shape, float lineWidth) {
-        RectangularShape inner = (RectangularShape) shape.clone();
-        inner.setFrame(shape.getX() + lineWidth, shape.getY() + lineWidth,
-                shape.getWidth() - lineWidth * 2, shape.getHeight() - lineWidth * 2);
         Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         path.append(shape, false);
-        path.append(inner, false);
+        path.append(inset(shape, lineWidth), false);
         g.fill(path);
+    }
+
+    /**
+     * @return the shape made smaller by the amount at each side. The corners of a rectangle with round
+     * corners get smaller with it, so the two shapes have the same distance all around
+     */
+    static RectangularShape inset(RectangularShape shape, float amount) {
+        double x = shape.getX() + amount;
+        double y = shape.getY() + amount;
+        double width = shape.getWidth() - amount * 2;
+        double height = shape.getHeight() - amount * 2;
+        if (shape instanceof RoundRectangle2D) {
+            RoundRectangle2D round = (RoundRectangle2D) shape;
+            return new RoundRectangle2D.Double(x, y, width, height,
+                    Math.max(round.getArcWidth() - amount * 2, 0), Math.max(round.getArcHeight() - amount * 2, 0));
+        }
+        RectangularShape inner = (RectangularShape) shape.clone();
+        inner.setFrame(x, y, width, height);
+        return inner;
     }
 
     /**
@@ -73,28 +90,57 @@ final class PickerUtils {
      * @param lineWidth the width of the line
      * @param gap       the space between the edge of a selected cell and the line
      */
-    static void paintCurrentMark(Graphics2D g, RectangularShape shape, boolean selected, float lineWidth, float gap) {
+    static void paintCurrentMark(Graphics2D g, RectangularShape shape, boolean selected, float lineWidth, float gap,
+                                 Color accent) {
         if (!selected) {
-            g.setColor(accentColor());
+            g.setColor(accent);
             paintOutline(g, shape, lineWidth);
             return;
         }
-        RectangularShape inner = (RectangularShape) shape.clone();
-        inner.setFrame(shape.getX() + gap, shape.getY() + gap, shape.getWidth() - gap * 2, shape.getHeight() - gap * 2);
-        g.setColor(accentForeground());
-        paintOutline(g, inner, lineWidth);
+        g.setColor(accentForeground(accent));
+        paintOutline(g, inset(shape, gap), lineWidth);
     }
 
-    static Color accentColor() {
-        Color color = UIManager.getColor("Component.accentColor");
+    /**
+     * Paints the mark of the keyboard on a cell: a line of dashes at the edge of the cell, as large as
+     * the shape of a selected cell. It does not look as the line of today, which has no dashes.
+     *
+     * @param shape the shape of the cell, an ellipse or a rectangle with round corners
+     * @param scale the scale of the sizes, as 1 for no scale
+     */
+    static void paintCursor(Graphics2D g, RectangularShape shape, float scale) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            // a line that is drawn is moved to whole pixels, and a circle is not round then
+            g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+            g2.setColor(foreground());
+            float width = 1.2f * scale;
+            g2.setStroke(new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 1,
+                    new float[]{3 * scale, 2.5f * scale}, 0));
+            // the middle of the line is half its width inside, so its outer edge is the edge of the shape
+            g2.draw(inset(shape, width / 2));
+        } finally {
+            g2.dispose();
+        }
+    }
+
+    /**
+     * @param color the color of the style, or null
+     * @return the color of what is selected: the one of the style, or the accent color of the look and feel
+     */
+    static Color accentColor(Color color) {
+        if (color != null) {
+            return color;
+        }
+        color = UIManager.getColor("Component.accentColor");
         return color != null ? color : new Color(0x007AFF);
     }
 
     /**
      * @return the color of a text on the accent color
      */
-    static Color accentForeground() {
-        return ColorFunctions.luma(accentColor()) < 0.7f ? Color.WHITE : new Color(0x1E1E1E);
+    static Color accentForeground(Color accent) {
+        return ColorFunctions.luma(accent) < 0.7f ? Color.WHITE : new Color(0x1E1E1E);
     }
 
     static Color foreground() {

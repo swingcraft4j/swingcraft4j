@@ -5,6 +5,10 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
@@ -12,6 +16,12 @@ import java.time.format.TextStyle;
 /**
  * The calendar of a date picker: a header to go to another month, and below it the days of the month,
  * the months of the year or the years. It shows the selection and tells the picker what was clicked.
+ * <p>
+ * With the focus, the keyboard moves through the days: the arrow keys by a day and a week, page up and
+ * page down by a month (with shift by a year), home and end to the first and the last day of the month,
+ * and enter or space selects the day. Control and up goes from the days to the months and on to the years.
+ * There the arrow keys move through the months and the years, and enter goes back: from a year to its
+ * months, and from a month to its days.
  */
 public final class CalendarPanel extends JPanel {
 
@@ -39,6 +49,13 @@ public final class CalendarPanel extends JPanel {
     private YearMonth month = YearMonth.now();
     // the first year of the page of years that is shown
     private int yearPage;
+    // what the keyboard is at in each view: a day, a month and a year. They start at what is shown
+    private LocalDate cursor;
+    private YearMonth cursorMonth;
+    private int cursorYear;
+    // true from the first key until the mouse is used or the focus is lost: the mark of the keyboard is
+    // shown only while the keyboard is used
+    private boolean keyboardUsed;
 
     private PickerButton buttonBack;
     private PickerButton buttonForward;
@@ -55,6 +72,184 @@ public final class CalendarPanel extends JPanel {
         add(slidePanel);
         applySize();
         show(View.DAY, null);
+        installKeys();
+    }
+
+    private void installKeys() {
+        setFocusable(true);
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (isEnabled() && !e.isAltDown() && !e.isMetaDown() && handleKey(e.getKeyCode(), e.isShiftDown(), e.isControlDown())) {
+                    keyboardUsed = true;
+                    repaint();
+                    e.consume();
+                }
+            }
+        });
+        addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                repaint();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                keyboardUsed = false;
+                repaint();
+            }
+        });
+    }
+
+    // true if the key was used
+    private boolean handleKey(int code, boolean shift, boolean control) {
+        if (control) {
+            // from the days to the months and to the years, and back
+            if (code == KeyEvent.VK_UP && view != View.YEAR) {
+                show(view == View.DAY ? View.MONTH : View.YEAR, SlidePanel.Direction.DOWN);
+                return true;
+            }
+            if (code == KeyEvent.VK_DOWN && view != View.DAY) {
+                selectCursor();
+                return true;
+            }
+            return false;
+        }
+        boolean leftToRight = getComponentOrientation().isLeftToRight();
+        int next = leftToRight ? 1 : -1;
+        switch (code) {
+            case KeyEvent.VK_LEFT:
+                moveCursor(-next, 0, 0);
+                return true;
+            case KeyEvent.VK_RIGHT:
+                moveCursor(next, 0, 0);
+                return true;
+            case KeyEvent.VK_UP:
+                moveCursor(0, -1, 0);
+                return true;
+            case KeyEvent.VK_DOWN:
+                moveCursor(0, 1, 0);
+                return true;
+            case KeyEvent.VK_PAGE_UP:
+                moveCursor(0, 0, shift ? -12 : -1);
+                return true;
+            case KeyEvent.VK_PAGE_DOWN:
+                moveCursor(0, 0, shift ? 12 : 1);
+                return true;
+            case KeyEvent.VK_HOME:
+            case KeyEvent.VK_END:
+                if (view == View.DAY) {
+                    LocalDate date = getCursorDate();
+                    setCursorDate(date.withDayOfMonth(code == KeyEvent.VK_HOME ? 1 : date.lengthOfMonth()));
+                    return true;
+                }
+                return false;
+            case KeyEvent.VK_ENTER:
+            case KeyEvent.VK_SPACE:
+                selectCursor();
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Moves what the keyboard is at: a day, a month or a year, as the view is.
+     *
+     * @param cells how many cells to the next
+     * @param rows  how many rows down
+     * @param pages how many pages on: months for the days, years for the months, pages for the years
+     */
+    private void moveCursor(int cells, int rows, int pages) {
+        if (view == View.DAY) {
+            setCursorDate(getCursorDate().plusDays(cells + rows * 7L).plusMonths(pages));
+        } else if (view == View.MONTH) {
+            YearMonth old = getCursorMonth();
+            cursorMonth = old.plusMonths(cells + rows * (long) MonthGrid.COLUMNS).plusYears(pages);
+            if (cursorMonth.getYear() != old.getYear()) {
+                // the months of another year
+                month = month.withYear(cursorMonth.getYear());
+                show(View.MONTH, cursorMonth.isAfter(old) ? SlidePanel.Direction.FORWARD : SlidePanel.Direction.BACKWARD);
+            }
+            repaint();
+        } else {
+            int old = getCursorYear();
+            cursorYear = old + cells + rows * YearGrid.COLUMNS + pages * YearGrid.YEARS;
+            int page = YearGrid.getFirstYear(cursorYear);
+            if (page != yearPage) {
+                // another page of years
+                yearPage = page;
+                show(View.YEAR, cursorYear > old ? SlidePanel.Direction.FORWARD : SlidePanel.Direction.BACKWARD);
+            }
+            repaint();
+        }
+    }
+
+    // enter: selects the day, or goes from the years to the months and from the months to the days
+    private void selectCursor() {
+        if (view == View.DAY) {
+            LocalDate date = getCursorDate();
+            if (option.isSelectable(date)) {
+                dateClicked(date);
+            }
+        } else if (view == View.MONTH) {
+            monthClicked(getCursorMonth());
+        } else {
+            yearClicked(getCursorYear());
+        }
+    }
+
+    /**
+     * @return the day the keyboard is at. If it is not in the month that is shown, as after a click on the
+     * header, it starts again at the selected day, today or the first day of that month
+     */
+    LocalDate getCursorDate() {
+        if (cursor == null || !YearMonth.from(cursor).equals(month)) {
+            LocalDate selected = selection.getAnchor();
+            LocalDate today = LocalDate.now();
+            if (selected != null && YearMonth.from(selected).equals(month)) {
+                cursor = selected;
+            } else if (YearMonth.from(today).equals(month)) {
+                cursor = today;
+            } else {
+                cursor = month.atDay(1);
+            }
+        }
+        return cursor;
+    }
+
+    private void setCursorDate(LocalDate date) {
+        cursor = date;
+        showMonth(YearMonth.from(date), true);
+        repaint();
+    }
+
+    /**
+     * @return the month the keyboard is at, in the year that is shown
+     */
+    YearMonth getCursorMonth() {
+        if (cursorMonth == null || cursorMonth.getYear() != month.getYear()) {
+            cursorMonth = month;
+        }
+        return cursorMonth;
+    }
+
+    /**
+     * @return the year the keyboard is at, on the page that is shown
+     */
+    int getCursorYear() {
+        if (YearGrid.getFirstYear(cursorYear) != yearPage) {
+            cursorYear = YearGrid.getFirstYear(month.getYear()) == yearPage ? month.getYear() : yearPage;
+        }
+        return cursorYear;
+    }
+
+    /**
+     * @return true if what the keyboard is at is shown with a line around it: the calendar has the focus
+     * and the keyboard was used, not the mouse
+     */
+    boolean isCursorShown() {
+        return keyboardUsed && isFocusOwner();
     }
 
     private Component createHeader() {
@@ -188,6 +383,8 @@ public final class CalendarPanel extends JPanel {
     }
 
     void dateClicked(LocalDate date) {
+        // the keyboard goes on from the day that was clicked
+        cursor = date;
         selection.click(date);
         repaint();
         listener.dateClicked(date);
@@ -196,6 +393,14 @@ public final class CalendarPanel extends JPanel {
     void monthClicked(YearMonth month) {
         this.month = month;
         show(View.DAY, SlidePanel.Direction.UP);
+    }
+
+    /**
+     * A click gives the calendar the focus, so the keyboard goes on from what was clicked.
+     */
+    void cellClicked() {
+        keyboardUsed = false;
+        requestFocusInWindow();
     }
 
     void yearClicked(int year) {

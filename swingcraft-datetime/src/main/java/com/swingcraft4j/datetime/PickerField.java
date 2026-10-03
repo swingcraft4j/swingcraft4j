@@ -186,6 +186,7 @@ public abstract class PickerField<T> extends JTextField {
     private void applyOption(FieldOption option) {
         String pattern = option.getPattern() != null ? option.getPattern() : getDefaultPattern();
         SegmentEditor newEditor = createEditor(pattern, option, this::editorChanged);
+        newEditor.setStableWidth(option.isStableWidth());
         checkPattern(newEditor);
         // the pickers are made again with the new option when they are shown
         closePopup();

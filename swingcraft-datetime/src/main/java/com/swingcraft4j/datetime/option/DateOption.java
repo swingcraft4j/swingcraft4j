@@ -1,13 +1,18 @@
 package com.swingcraft4j.datetime.option;
 
 import java.time.DayOfWeek;
+import com.swingcraft4j.datetime.DatePreset;
+
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Predicate;
 
 /**
- * The options of a date picker: what it selects and how the calendar is shown. The animation is in its own
- * {@link AnimationOption}. The setters return the option, so they can be chained.
+ * The options of a date picker: what it selects and how the calendar is shown. The animation and the style
+ * are in their own {@link AnimationOption} and {@link StyleOption}. The setters return the option, so they can be chained.
  * <p>
  * The option is copied when it is given to a picker, so changing it afterwards
  * does not affect the picker.
@@ -20,7 +25,9 @@ public class DateOption {
     private Locale locale;
     private boolean closeOnSelect;
     private Predicate<LocalDate> selectable;
+    private List<DatePreset> presets = new ArrayList<>();
     private AnimationOption animationOption = new AnimationOption();
+    private StyleOption styleOption = new StyleOption();
 
     public DateSelectionMode getSelectionMode() {
         return selectionMode;
@@ -56,8 +63,16 @@ public class DateOption {
         return selectable == null || selectable.test(date);
     }
 
+    public List<DatePreset> getPresets() {
+        return Collections.unmodifiableList(presets);
+    }
+
     public AnimationOption getAnimationOption() {
         return animationOption;
+    }
+
+    public StyleOption getStyleOption() {
+        return styleOption;
     }
 
     /**
@@ -122,6 +137,17 @@ public class DateOption {
     }
 
     /**
+     * @param presets ranges of dates with a name, as "Last 7 days". The picker shows them next to the
+     *                calendar, a click on one selects its range. A picker that selects one date selects
+     *                the first date of the range. Null or an empty list (default) for none.
+     *                {@link DatePreset#defaults()} has the usual ones
+     */
+    public DateOption setPresets(List<DatePreset> presets) {
+        this.presets = presets != null ? new ArrayList<>(presets) : new ArrayList<>();
+        return this;
+    }
+
+    /**
      * @param animationOption how the picker is animated, change the current one with {@link #getAnimationOption()}
      */
     public DateOption setAnimationOption(AnimationOption animationOption) {
@@ -129,6 +155,17 @@ public class DateOption {
             throw new IllegalArgumentException("animation option must not null");
         }
         this.animationOption = animationOption;
+        return this;
+    }
+
+    /**
+     * @param styleOption how the picker looks, change the current one with {@link #getStyleOption()}
+     */
+    public DateOption setStyleOption(StyleOption styleOption) {
+        if (styleOption == null) {
+            throw new IllegalArgumentException("style option must not null");
+        }
+        this.styleOption = styleOption;
         return this;
     }
 
@@ -140,7 +177,9 @@ public class DateOption {
         option.size = size;
         option.closeOnSelect = closeOnSelect;
         option.selectable = selectable;
+        option.presets = new ArrayList<>(presets);
         option.animationOption = animationOption.copy();
+        option.styleOption = styleOption.copy();
         return option;
     }
 }

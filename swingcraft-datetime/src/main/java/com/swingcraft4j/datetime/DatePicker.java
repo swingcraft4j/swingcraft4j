@@ -3,8 +3,10 @@ package com.swingcraft4j.datetime;
 import com.swingcraft4j.datetime.internal.CalendarPanel;
 import com.swingcraft4j.datetime.internal.DateSelection;
 import com.swingcraft4j.datetime.internal.PickerPopup;
+import com.swingcraft4j.datetime.internal.PresetPanel;
 import com.swingcraft4j.datetime.option.DateOption;
 import com.swingcraft4j.datetime.option.DateSelectionMode;
+import com.swingcraft4j.datetime.option.StyleOption;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -25,6 +27,7 @@ public class DatePicker extends JPanel {
     private final DateSelection selection = new DateSelection();
     private final PickerPopup popup = new PickerPopup(this);
     private final CalendarPanel calendar;
+    private final PresetPanel presetPanel;
     private DateOption option;
     // what the listeners were told last: a date, a range or null
     private Object firedValue;
@@ -43,8 +46,14 @@ public class DatePicker extends JPanel {
         this.option = option.copy();
         selection.setMode(this.option.getSelectionMode());
         calendar = new CalendarPanel(selection, this.option, date -> userSelected());
-        setLayout(new MigLayout("fill,insets 10", "[fill]", "[fill]"));
+        presetPanel = new PresetPanel(this::presetSelected);
+        presetPanel.setOption(this.option);
+        // the presets take no space when there are none: they have no column of their own in the layout,
+        // a column would keep its gap also when it is empty
+        setLayout(new MigLayout("fill,hidemode 3", "[fill]", "[fill]"));
         add(calendar);
+        add(presetPanel, "growy");
+        applyStyle();
     }
 
     /**
@@ -66,6 +75,8 @@ public class DatePicker extends JPanel {
         this.option = option.copy();
         selection.setMode(this.option.getSelectionMode());
         calendar.setOption(this.option);
+        presetPanel.setOption(this.option);
+        applyStyle();
         fireSelectionChanged();
     }
 
@@ -179,16 +190,50 @@ public class DatePicker extends JPanel {
         return popup.isVisible();
     }
 
+    // the background and the space around the content
+    private void applyStyle() {
+        StyleOption style = option.getStyleOption();
+        Insets padding = style.getPadding();
+        ((MigLayout) getLayout()).setLayoutConstraints(
+                "fill,hidemode 3,insets " + padding.top + " " + padding.left + " " + padding.bottom + " " + padding.right);
+        // the color of the look and feel changes with the look and feel, as it did before
+        setBackground(style.getBackground() != null ? style.getBackground() : UIManager.getColor("Panel.background"));
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Gives the focus to the calendar, so the keyboard moves through its days.
+     */
+    @Override
+    public boolean requestFocusInWindow() {
+        return calendar.requestFocusInWindow();
+    }
+
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         calendar.setEnabled(enabled);
+        presetPanel.setEnabled(enabled);
     }
 
     private void selected(LocalDate date) {
         calendar.selectionChanged();
         showDate(date);
         fireSelectionChanged();
+    }
+
+    // the user has clicked a preset
+    private void presetSelected(DatePreset preset) {
+        DateRange range = preset.getRange();
+        if (option.getSelectionMode() == DateSelectionMode.RANGE) {
+            setSelectedDateRange(range);
+        } else {
+            setSelectedDate(range.getFrom());
+        }
+        if (option.isCloseOnSelect()) {
+            closePopup();
+        }
     }
 
     // the user has clicked a date
@@ -202,6 +247,7 @@ public class DatePicker extends JPanel {
     // tells the listeners, if the selected date or range is another one. A range without its end is
     // not a selection yet
     private void fireSelectionChanged() {
+        presetPanel.selectionChanged(selection);
         if (selection.isSelecting()) {
             return;
         }

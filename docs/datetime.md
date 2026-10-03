@@ -9,9 +9,12 @@ A date picker and a time picker with animation, and fields to type a date and a 
 - [Time picker](#time-picker)
 - [Time options](#time-options)
 - [Selectable dates and times](#selectable-dates-and-times)
+- [Presets](#presets)
+- [Keyboard](#keyboard)
 - [Fields](#fields)
 - [Field options](#field-options)
 - [Size](#size)
+- [Style](#style)
 - [Popup](#popup)
 - [Animation](#animation)
 - [Default option](#default-option)
@@ -155,7 +158,9 @@ DatePicker datePicker = new DatePicker(option);
 | `setLocale(Locale)`            | `null`           | The language of the names of the months and the days, null for the default locale |
 | `setCloseOnSelect(boolean)`    | `false`          | Closes the popup when a date, or the end of a range, is selected |
 | `setSelectable(Predicate)`     | `null`           | Which dates can be selected, see [Selectable dates and times](#selectable-dates-and-times) |
+| `setPresets(List)`             | none             | Ranges with a name next to the calendar, see [Presets](#presets) |
 | `setAnimationOption(option)`   |                  | How the picker is animated, see [Animation](#animation)         |
+| `setStyleOption(option)`       |                  | How the picker looks, see [Style](#style)                       |
 
 `setOption` clears the selection if the selection mode is another one.
 
@@ -207,6 +212,7 @@ TimePicker timePicker = new TimePicker(option);
 | `setCloseOnSelect(boolean)`  | `false` | Closes the popup when the minute is selected                       |
 | `setSelectable(Predicate)`   | `null`  | Which times can be selected, see [Selectable dates and times](#selectable-dates-and-times) |
 | `setAnimationOption(option)` |         | How the picker is animated, see [Animation](#animation)            |
+| `setStyleOption(option)`     |         | How the picker looks, see [Style](#style)                          |
 
 A clock with 24 hours has two circles: the hours from 1 to 12 outside, and from 13 to 0 inside.
 
@@ -224,7 +230,80 @@ TimeOption timeOption = new TimeOption()
 ```
 
 On the clock, an hour is disabled if none of its minutes can be selected. An hour that is selected gets its
-first minute that can be selected. A date or a time that is set from the code is not checked.
+first minute that can be selected, and so does a time that is moved to the other half of the day with AM and
+PM. If that hour has none, AM and PM stay as they are. A date or a time that is set from the code is not
+checked.
+
+## Presets
+
+A date picker can show ranges of dates with a name next to its calendar, as "Last 7 days". A click on one
+selects its range. The preset that has the selection of the picker is shown as selected.
+
+```java
+DatePicker datePicker = new DatePicker(new DateOption()
+        .setSelectionMode(DateSelectionMode.RANGE)
+        .setPresets(DatePreset.defaults()));
+```
+
+`DatePreset.defaults()` has today, yesterday, the last 7 and the last 30 days, this month, the last month and
+the last year. Make your own list from the ones of `DatePreset`, or with your own name and range:
+
+```java
+List<DatePreset> presets = new ArrayList<>();
+presets.add(DatePreset.today());
+presets.add(DatePreset.lastDays(14));
+presets.add(DatePreset.thisYear());
+presets.add(new DatePreset("Next week", () -> {
+    LocalDate monday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+    return new DateRange(monday, monday.plusDays(6));
+}));
+```
+
+| `DatePreset`          | Range                                         |
+|-----------------------|-----------------------------------------------|
+| `today()`             | Today                                         |
+| `yesterday()`         | Yesterday                                     |
+| `lastDays(int)`       | That many days, today is the last             |
+| `thisMonth()`         | From the first to the last day of this month  |
+| `lastMonth()`         | The month before this one                     |
+| `thisYear()`          | From the first to the last day of this year   |
+| `lastYear()`          | The year before this one                      |
+
+The range is asked for each time, so "Today" is right on the next day too. A picker that selects one date
+selects the first date of the range. The names are in English: for another language, make the presets with
+your own names.
+
+## Keyboard
+
+A picker in a container can be used with the keyboard when it has the focus: with the tab key, a click, or
+`requestFocusInWindow()`.
+
+| Date picker            | What it does                                             |
+|------------------------|----------------------------------------------------------|
+| Left, Right            | The day before or after                                  |
+| Up, Down               | The same day of the week before or after                 |
+| Page Up, Page Down     | The month before or after, with Shift the year           |
+| Home, End              | The first or the last day of the month                   |
+| Enter, Space           | Selects the day                                          |
+| Ctrl + Up              | Shows the months, and from the months the years          |
+
+In the months and the years, the arrow keys move through them and Page Up and Page Down go to the year or
+the page before and after. Enter, Space or Ctrl + Down goes back: from a year to its months, and from a month
+to its days.
+
+What the keyboard is at has a line of dashes around it, so it does not look as the line of today. The line
+is shown from the first key on, and not after a click with the mouse. It moves without selecting, and the
+calendar goes to another month, year or page with it.
+
+| Time picker            | What it does                                             |
+|------------------------|----------------------------------------------------------|
+| Up, Down               | The next hour or minute that can be selected             |
+| Left, Right            | Shows the hours or the minutes                           |
+| Enter, Space           | Goes on from the hours to the minutes                    |
+| `A`, `P`               | Select AM or PM                                          |
+
+A picker in a popup does not get the focus. The popup of a field is used from the field: what is typed
+there is selected in the picker.
 
 ## Fields
 
@@ -425,6 +504,7 @@ DateField dateField = new DateField(option);
 | `setLocale(Locale)`            | `null`  | The language of the names and of AM and PM, in the field and in the popup |
 | `setShowPickerButton(boolean)` | `true`  | False hides the button of the popup, the keyboard still shows it     |
 | `setShowClearButton(boolean)`  | `false` | Shows a button that removes what is typed, while the field is not empty |
+| `setStableWidth(boolean)`      | `false` | True makes a field with the name of a month or a day as wide as its longest name, so it keeps its width. False makes it as wide as the name that is shown |
 | `setCommitMode(CommitMode)`    | `KEEP`  | What happens to what is typed when the field loses the focus without a value, see [Commit mode](#commit-mode) |
 | `setDateOption(DateOption)`    |         | The option of the date picker in the popup                           |
 | `setTimeOption(TimeOption)`    |         | The option of the time picker in the popup                           |
@@ -477,6 +557,45 @@ TimePicker timePicker = new TimePicker(new TimeOption().setSize(PickerSize.LARGE
 | `DEFAULT`    | The size if no other size is set    |
 | `MEDIUM`     | Larger than the default             |
 | `LARGE`      | The largest                         |
+
+## Style
+
+`StyleOption` sets how a picker looks. Get it from the option of the picker. Both pickers have it, and the
+same style can be given to both.
+
+```java
+DateOption option = new DateOption();
+option.getStyleOption()
+        .setColor(new Color(0x16A34A))
+        .setSelectionRound(8)
+        .setWeekendColor(new Color(0xEF4444));
+
+TimeOption timeOption = new TimeOption()
+        .setStyleOption(option.getStyleOption());
+```
+
+| Setter                        | Default | Picker | What it does                                                   |
+|-------------------------------|---------|--------|----------------------------------------------------------------|
+| `setColor(Color)`             | `null`  | Both   | The color of what is selected, null for the accent color of the look and feel |
+| `setBackground(Color)`        | `null`  | Both   | The background of the picker, null for the one of the look and feel |
+| `setPadding(int)`             | `10`    | Both   | The space between the edge of the picker and its content       |
+| `setPadding(Insets)`          |         | Both   | The same, for each side                                        |
+| `setSelectionRound(int)`      | `999`   | Date   | The corner arc of the selected day, month and year: 0 for square, a large value for a circle |
+| `setWeekendColor(Color)`      | `null`  | Date   | The color of the Saturdays and the Sundays and of their names  |
+| `setShowOutsideDays(boolean)` | `true`  | Date   | False leaves the days of the months before and after out       |
+| `setShowToday(boolean)`       | `true`  | Date   | False shows today, this month and this year without the outline |
+| `setClockBackground(Color)`   | `null`  | Time   | The color of the face of the clock, null for a shade of the background |
+
+The color is used for the selected day and the band of a range, the outline of today, the hand of the clock
+and the selected hour and minute. The text on it is white or dark, as the color needs.
+
+A field has no style of its own: it is a text field of the look and feel. Its popup has the style of the
+date option and the time option of the field:
+
+```java
+FieldOption fieldOption = new FieldOption();
+fieldOption.getDateOption().getStyleOption().setColor(new Color(0x16A34A));
+```
 
 ## Popup
 

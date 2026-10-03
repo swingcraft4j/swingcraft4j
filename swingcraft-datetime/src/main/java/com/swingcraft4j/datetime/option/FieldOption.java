@@ -16,6 +16,7 @@ public class FieldOption {
     private Locale locale;
     private boolean showPickerButton = true;
     private boolean showClearButton;
+    private boolean stableWidth;
     private CommitMode commitMode = CommitMode.KEEP;
     // the popup of a field closes when the date or the time is selected
     private DateOption dateOption = new DateOption().setCloseOnSelect(true);
@@ -46,6 +47,10 @@ public class FieldOption {
 
     public boolean isShowClearButton() {
         return showClearButton;
+    }
+
+    public boolean isStableWidth() {
+        return stableWidth;
     }
 
     public CommitMode getCommitMode() {
@@ -119,6 +124,17 @@ public class FieldOption {
     }
 
     /**
+     * @param stableWidth true to make a field with the name of a month or a day in its pattern as wide as
+     *                    its longest name, so it keeps its width when the name changes. False (default) to
+     *                    make it as wide as the name that is shown: the field is shorter, and its width
+     *                    changes with the name
+     */
+    public FieldOption setStableWidth(boolean stableWidth) {
+        this.stableWidth = stableWidth;
+        return this;
+    }
+
+    /**
      * @param commitMode what the field does with what is typed when it loses the focus and has no value:
      *                   it stays ({@link CommitMode#KEEP}, default), the field goes back to its last value
      *                   ({@link CommitMode#REVERT}) or is cleared ({@link CommitMode#CLEAR})
@@ -162,6 +178,7 @@ public class FieldOption {
         option.locale = locale;
         option.showPickerButton = showPickerButton;
         option.showClearButton = showClearButton;
+        option.stableWidth = stableWidth;
         option.commitMode = commitMode;
         option.dateOption = dateOption.copy();
         option.timeOption = timeOption.copy();

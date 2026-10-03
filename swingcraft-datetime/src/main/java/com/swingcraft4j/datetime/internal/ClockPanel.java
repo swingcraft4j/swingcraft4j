@@ -2,6 +2,7 @@ package com.swingcraft4j.datetime.internal;
 
 import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.swingcraft4j.datetime.option.PickerSize;
+import com.swingcraft4j.datetime.option.StyleOption;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,6 +48,7 @@ final class ClockPanel extends JComponent {
     private final Listener listener;
     private final ProgressAnimation animation = new ProgressAnimation();
     private PickerSize size = PickerSize.DEFAULT;
+    private StyleOption style = new StyleOption();
     // says if the hour (0 to 23) or the minute that is shown can be selected, null if all can
     private IntPredicate selectable;
     private boolean hourView = true;
@@ -89,6 +91,11 @@ final class ClockPanel extends JComponent {
     void setPickerSize(PickerSize size) {
         this.size = size;
         revalidate();
+        repaint();
+    }
+
+    void setStyle(StyleOption style) {
+        this.style = style;
         repaint();
     }
 
@@ -192,11 +199,13 @@ final class ClockPanel extends JComponent {
             float size = getClockSize();
             float centerX = getWidth() / 2f;
             float centerY = getHeight() / 2f;
-            g2.setColor(PickerUtils.shade(PickerUtils.background(this), 0.04f));
+            Color accentColor = PickerUtils.accentColor(style.getColor());
+            g2.setColor(style.getClockBackground() != null
+                    ? style.getClockBackground() : PickerUtils.shade(PickerUtils.background(this), 0.04f));
             g2.fill(new Ellipse2D.Float(centerX - size / 2, centerY - size / 2, size, size));
 
             paintNumbers(g2, centerX, centerY, size, isEnabled() ? PickerUtils.foreground() : PickerUtils.disabledForeground());
-            Color accent = isEnabled() ? PickerUtils.accentColor() : PickerUtils.disabledForeground();
+            Color accent = isEnabled() ? accentColor : PickerUtils.disabledForeground();
             float centerSize = scale(CENTER_SIZE);
             g2.setColor(accent);
             g2.fill(new Ellipse2D.Float(centerX - centerSize / 2, centerY - centerSize / 2, centerSize, centerSize));
@@ -214,14 +223,16 @@ final class ClockPanel extends JComponent {
             g2.setStroke(new BasicStroke(scale(HAND_WIDTH)));
             g2.draw(new Line2D.Float(centerX, centerY, knobX, knobY));
             g2.fill(knob);
-            g2.setColor(PickerUtils.accentForeground());
+            g2.setColor(PickerUtils.accentForeground(accentColor));
             if (!hourView && value % 5 != 0 && !animation.isRunning()) {
-                // a minute between two numbers
+                // a minute between two numbers has a dot. The number next to it is not painted on the knob:
+                // only a part of it would be seen
                 float dot = scale(4f);
                 g2.fill(new Ellipse2D.Float(knobX - dot / 2, knobY - dot / 2, dot, dot));
+                return;
             }
             g2.clip(knob);
-            paintNumbers(g2, centerX, centerY, size, PickerUtils.accentForeground());
+            paintNumbers(g2, centerX, centerY, size, PickerUtils.accentForeground(accentColor));
         } finally {
             g2.dispose();
         }

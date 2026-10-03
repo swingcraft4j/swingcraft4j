@@ -4,7 +4,8 @@ import java.time.LocalTime;
 import java.util.function.Predicate;
 
 /**
- * The options of a time picker. The animation is in its own {@link AnimationOption}.
+ * The options of a time picker. The animation and the style are in their own {@link AnimationOption} and
+ * {@link StyleOption}.
  * The setters return the option, so they can be chained.
  * <p>
  * The option is copied when it is given to a picker, so changing it afterwards
@@ -17,6 +18,7 @@ public class TimeOption {
     private boolean closeOnSelect;
     private Predicate<LocalTime> selectable;
     private AnimationOption animationOption = new AnimationOption();
+    private StyleOption styleOption = new StyleOption();
 
     public boolean isHour24() {
         return hour24;
@@ -43,6 +45,10 @@ public class TimeOption {
 
     public AnimationOption getAnimationOption() {
         return animationOption;
+    }
+
+    public StyleOption getStyleOption() {
+        return styleOption;
     }
 
     /**
@@ -95,6 +101,17 @@ public class TimeOption {
         return this;
     }
 
+    /**
+     * @param styleOption how the picker looks, change the current one with {@link #getStyleOption()}
+     */
+    public TimeOption setStyleOption(StyleOption styleOption) {
+        if (styleOption == null) {
+            throw new IllegalArgumentException("style option must not null");
+        }
+        this.styleOption = styleOption;
+        return this;
+    }
+
     public TimeOption copy() {
         TimeOption option = new TimeOption();
         option.hour24 = hour24;
@@ -102,6 +119,7 @@ public class TimeOption {
         option.closeOnSelect = closeOnSelect;
         option.selectable = selectable;
         option.animationOption = animationOption.copy();
+        option.styleOption = styleOption.copy();
         return option;
     }
 }
