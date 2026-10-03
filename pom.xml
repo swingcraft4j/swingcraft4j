@@ -123,27 +123,27 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <!-- publishes to maven central with mvn deploy: a snapshot version goes to the snapshot repository -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.9.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <!-- the parent pom and the demo are not published -->
+                    <excludeArtifacts>swingcraft4j,swingcraft-demo</excludeArtifacts>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
     <profiles>
-        <!-- publish to maven central: mvn deploy -P release -->
+        <!-- a release needs sources, javadoc and a signature too: mvn deploy -P release -->
         <profile>
             <id>release</id>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>org.sonatype.central</groupId>
-                        <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.9.0</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <publishingServerId>central</publishingServerId>
-                            <!-- the parent pom and the demo are not published -->
-                            <excludeArtifacts>swingcraft4j,swingcraft-demo</excludeArtifacts>
-                        </configuration>
-                    </plugin>
-
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
