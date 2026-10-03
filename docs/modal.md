@@ -24,6 +24,31 @@ Modal dialogs shown inside the window, with animation and a back stack.
 
 FlatLaf and MigLayout come in with the module. Set up a FlatLaf look and feel before a modal is shown.
 
+### Snapshot
+
+The snapshot is the version in development, before the release. Add the snapshot repository to use it:
+
+```xml
+<repositories>
+    <repository>
+        <id>central-snapshots</id>
+        <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        <releases>
+            <enabled>false</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+
+<dependency>
+    <groupId>com.swingcraft4j</groupId>
+    <artifactId>swingcraft-modal</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+</dependency>
+```
+
 All the methods of `JModal` must be called on the event dispatch thread.
 
 ## Show a modal
