@@ -55,7 +55,7 @@ final class DayGrid extends CellGrid {
     @Override
     boolean isCellEnabled(int cell) {
         // the first row has the names of the days
-        return cell >= DAYS;
+        return cell >= DAYS && calendar.getOption().isSelectable(getDate(cell));
     }
 
     @Override
@@ -92,7 +92,7 @@ final class DayGrid extends CellGrid {
         }
         if (selected) {
             g.setColor(PickerUtils.accentForeground());
-        } else if (!isEnabled() || !YearMonth.from(date).equals(month)) {
+        } else if (!isEnabled() || !YearMonth.from(date).equals(month) || !calendar.getOption().isSelectable(date)) {
             g.setColor(PickerUtils.disabledForeground());
         } else {
             g.setColor(PickerUtils.foreground());

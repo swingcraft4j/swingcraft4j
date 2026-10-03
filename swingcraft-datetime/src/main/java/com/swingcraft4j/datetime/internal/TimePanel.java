@@ -169,12 +169,18 @@ public final class TimePanel extends JPanel {
     // the user has moved the hand of the clock
     private void clockChanged(int value) {
         if (hourView) {
-            time = time != null ? time.withHour(value) : LocalTime.of(value, 0);
+            // the minute stays if it can, or the hour gets its first minute that can be selected
+            LocalTime selected = LocalTime.of(value, time != null ? time.getMinute() : 0);
+            for (int minute = 0; minute < 60 && !option.isSelectable(selected); minute++) {
+                selected = LocalTime.of(value, minute);
+            }
+            time = selected;
         } else {
             time = time != null ? time.withMinute(value) : LocalTime.of(pm ? 12 : 0, value);
         }
         pm = time.getHour() >= 12;
         updateHeader();
+        updateSelectable();
         listener.timeChanged();
     }
 
@@ -196,7 +202,27 @@ public final class TimePanel extends JPanel {
         updateHeader();
         int value = time == null ? -1 : (hourView ? time.getHour() : time.getMinute());
         int duration = animate && isShowing() ? PickerUtils.duration(option.getAnimationOption()) : 0;
+        updateSelectable();
         clock.show(hourView, option.isHour24(), pm, value, duration);
+    }
+
+    // an hour can be selected if one of its minutes can, a minute if the time with the hour can
+    private void updateSelectable() {
+        if (option.getSelectable() == null) {
+            clock.setSelectable(null);
+        } else if (hourView) {
+            clock.setSelectable(hour -> {
+                for (int minute = 0; minute < 60; minute++) {
+                    if (option.isSelectable(LocalTime.of(hour, minute))) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        } else {
+            int hour = time != null ? time.getHour() : (pm ? 12 : 0);
+            clock.setSelectable(minute -> option.isSelectable(LocalTime.of(hour, minute)));
+        }
     }
 
     private void updateHeader() {

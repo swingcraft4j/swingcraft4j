@@ -1,5 +1,8 @@
 package com.swingcraft4j.datetime.option;
 
+import java.time.LocalTime;
+import java.util.function.Predicate;
+
 /**
  * The options of a time picker. The animation is in its own {@link AnimationOption}.
  * The setters return the option, so they can be chained.
@@ -12,6 +15,7 @@ public class TimeOption {
     private boolean hour24;
     private PickerSize size = PickerSize.DEFAULT;
     private boolean closeOnSelect;
+    private Predicate<LocalTime> selectable;
     private AnimationOption animationOption = new AnimationOption();
 
     public boolean isHour24() {
@@ -24,6 +28,17 @@ public class TimeOption {
 
     public boolean isCloseOnSelect() {
         return closeOnSelect;
+    }
+
+    public Predicate<LocalTime> getSelectable() {
+        return selectable;
+    }
+
+    /**
+     * @return true if the user can select the time
+     */
+    public boolean isSelectable(LocalTime time) {
+        return selectable == null || selectable.test(time);
     }
 
     public AnimationOption getAnimationOption() {
@@ -59,6 +74,17 @@ public class TimeOption {
     }
 
     /**
+     * @param selectable says which times the user can select: true for a time that can be selected.
+     *                   An hour without any minute that can be selected, and the other minutes, are shown as
+     *                   disabled on the clock and can not be selected. Null (default) to select every time.
+     *                   A time that is set from the code is not checked
+     */
+    public TimeOption setSelectable(Predicate<LocalTime> selectable) {
+        this.selectable = selectable;
+        return this;
+    }
+
+    /**
      * @param animationOption how the picker is animated, change the current one with {@link #getAnimationOption()}
      */
     public TimeOption setAnimationOption(AnimationOption animationOption) {
@@ -74,6 +100,7 @@ public class TimeOption {
         option.hour24 = hour24;
         option.size = size;
         option.closeOnSelect = closeOnSelect;
+        option.selectable = selectable;
         option.animationOption = animationOption.copy();
         return option;
     }

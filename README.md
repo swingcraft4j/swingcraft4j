@@ -6,7 +6,7 @@ Java Swing components built on the [FlatLaf](https://github.com/JFormDesigner/Fl
 |-----------------------|------------------------------------------------------------------------|------------------------------|
 | `swingcraft-modal`    | Modal dialogs shown inside the window, with animation and a back stack | [Modal](docs/modal.md)       |
 | `swingcraft-toast`    | Toast notifications, also for background tasks                         | [Toast](docs/toast.md)       |
-| `swingcraft-datetime` | A date picker with a date range, and a time picker with 12 or 24 hours | [Datetime](docs/datetime.md) |
+| `swingcraft-datetime` | A date picker with a date range, a time picker, and fields to type them | [Datetime](docs/datetime.md) |
 
 Website: https://www.swingcraft4j.com
 

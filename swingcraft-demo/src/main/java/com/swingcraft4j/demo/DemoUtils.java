@@ -19,7 +19,11 @@ final class DemoUtils {
      * @return a panel with a title border, the components are added one after the other
      */
     static JPanel createGroup(String title, String layoutConstraints) {
-        JPanel panel = new JPanel(new MigLayout(layoutConstraints));
+        return createGroup(title, layoutConstraints, "", "");
+    }
+
+    static JPanel createGroup(String title, String layoutConstraints, String columnConstraints, String rowConstraints) {
+        JPanel panel = new JPanel(new MigLayout(layoutConstraints, columnConstraints, rowConstraints));
         panel.setBorder(new TitledBorder(title));
         return panel;
     }

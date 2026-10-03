@@ -1,7 +1,9 @@
 package com.swingcraft4j.datetime.option;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.Locale;
+import java.util.function.Predicate;
 
 /**
  * The options of a date picker: what it selects and how the calendar is shown. The animation is in its own
@@ -17,6 +19,7 @@ public class DateOption {
     private DayOfWeek firstDayOfWeek = DayOfWeek.SUNDAY;
     private Locale locale;
     private boolean closeOnSelect;
+    private Predicate<LocalDate> selectable;
     private AnimationOption animationOption = new AnimationOption();
 
     public DateSelectionMode getSelectionMode() {
@@ -40,6 +43,17 @@ public class DateOption {
 
     public boolean isCloseOnSelect() {
         return closeOnSelect;
+    }
+
+    public Predicate<LocalDate> getSelectable() {
+        return selectable;
+    }
+
+    /**
+     * @return true if the user can select the date
+     */
+    public boolean isSelectable(LocalDate date) {
+        return selectable == null || selectable.test(date);
     }
 
     public AnimationOption getAnimationOption() {
@@ -98,6 +112,16 @@ public class DateOption {
     }
 
     /**
+     * @param selectable says which dates the user can select: true for a date that can be selected.
+     *                   The other dates are shown as disabled and can not be clicked. Null (default) to
+     *                   select every date. A date that is set from the code is not checked
+     */
+    public DateOption setSelectable(Predicate<LocalDate> selectable) {
+        this.selectable = selectable;
+        return this;
+    }
+
+    /**
      * @param animationOption how the picker is animated, change the current one with {@link #getAnimationOption()}
      */
     public DateOption setAnimationOption(AnimationOption animationOption) {
@@ -115,6 +139,7 @@ public class DateOption {
         option.locale = locale;
         option.size = size;
         option.closeOnSelect = closeOnSelect;
+        option.selectable = selectable;
         option.animationOption = animationOption.copy();
         return option;
     }

@@ -10,6 +10,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.util.function.IntPredicate;
 
 /**
  * The clock of a time picker. It shows the hours or the minutes in a circle, and a hand that points to the
@@ -46,6 +47,8 @@ final class ClockPanel extends JComponent {
     private final Listener listener;
     private final ProgressAnimation animation = new ProgressAnimation();
     private PickerSize size = PickerSize.DEFAULT;
+    // says if the hour (0 to 23) or the minute that is shown can be selected, null if all can
+    private IntPredicate selectable;
     private boolean hourView = true;
     private boolean hour24;
     private boolean pm;
@@ -91,6 +94,19 @@ final class ClockPanel extends JComponent {
 
     private float scale(float value) {
         return PickerUtils.scale(size, value);
+    }
+
+    /**
+     * @param selectable says if the hour (0 to 23) or the minute that the clock shows can be selected.
+     *                   Null if all of them can
+     */
+    void setSelectable(IntPredicate selectable) {
+        this.selectable = selectable;
+        repaint();
+    }
+
+    private boolean isSelectable(int value) {
+        return selectable == null || selectable.test(value);
     }
 
     /**
@@ -154,7 +170,7 @@ final class ClockPanel extends JComponent {
         } else {
             selected = (int) Math.round(degrees / 6) % 60;
         }
-        if (selected != value) {
+        if (selected != value && isSelectable(selected)) {
             // the hand follows the mouse without animation
             show(hourView, hour24, pm, selected, 0);
             listener.valueChanged(selected);
@@ -179,8 +195,7 @@ final class ClockPanel extends JComponent {
             g2.setColor(PickerUtils.shade(PickerUtils.background(this), 0.04f));
             g2.fill(new Ellipse2D.Float(centerX - size / 2, centerY - size / 2, size, size));
 
-            g2.setColor(isEnabled() ? PickerUtils.foreground() : PickerUtils.disabledForeground());
-            paintNumbers(g2, centerX, centerY, size);
+            paintNumbers(g2, centerX, centerY, size, isEnabled() ? PickerUtils.foreground() : PickerUtils.disabledForeground());
             Color accent = isEnabled() ? PickerUtils.accentColor() : PickerUtils.disabledForeground();
             float centerSize = scale(CENTER_SIZE);
             g2.setColor(accent);
@@ -206,30 +221,41 @@ final class ClockPanel extends JComponent {
                 g2.fill(new Ellipse2D.Float(knobX - dot / 2, knobY - dot / 2, dot, dot));
             }
             g2.clip(knob);
-            paintNumbers(g2, centerX, centerY, size);
+            paintNumbers(g2, centerX, centerY, size, PickerUtils.accentForeground());
         } finally {
             g2.dispose();
         }
     }
 
-    private void paintNumbers(Graphics2D g, float centerX, float centerY, float size) {
+    /**
+     * @param color the color of the numbers that can be selected
+     */
+    private void paintNumbers(Graphics2D g, float centerX, float centerY, float size, Color color) {
+        float outer = size / 2 - scale(OUTER_MARGIN);
         for (int i = 0; i < 12; i++) {
-            if (hourView) {
-                paintNumber(g, centerX, centerY, size / 2 - scale(OUTER_MARGIN), i, i == 0 ? "12" : String.valueOf(i));
-                if (hour24) {
-                    Font font = g.getFont();
-                    g.setFont(PickerUtils.font(this.size, INNER_FONT_SIZE));
-                    paintNumber(g, centerX, centerY, size / 2 - scale(INNER_MARGIN), i, i == 0 ? "00" : String.valueOf(i + 12));
-                    g.setFont(font);
-                }
+            if (!hourView) {
+                paintNumber(g, centerX, centerY, outer, i, i * 5, i == 0 ? "00" : String.valueOf(i * 5), color);
+            } else if (hour24) {
+                paintNumber(g, centerX, centerY, outer, i, i == 0 ? 12 : i, i == 0 ? "12" : String.valueOf(i), color);
+                Font font = g.getFont();
+                g.setFont(PickerUtils.font(this.size, INNER_FONT_SIZE));
+                paintNumber(g, centerX, centerY, size / 2 - scale(INNER_MARGIN), i, i == 0 ? 0 : i + 12,
+                        i == 0 ? "00" : String.valueOf(i + 12), color);
+                g.setFont(font);
             } else {
-                paintNumber(g, centerX, centerY, size / 2 - scale(OUTER_MARGIN), i, i == 0 ? "00" : String.valueOf(i * 5));
+                // 12 at the top is the first hour of the half of the day
+                paintNumber(g, centerX, centerY, outer, i, i + (pm ? 12 : 0), i == 0 ? "12" : String.valueOf(i), color);
             }
         }
     }
 
-    // index is the place on the clock, from 0 at the top to 11
-    private void paintNumber(Graphics2D g, float centerX, float centerY, float radius, int index, String text) {
+    /**
+     * @param index the place on the clock, from 0 at the top to 11
+     * @param value the hour (0 to 23) or the minute of the number
+     */
+    private void paintNumber(Graphics2D g, float centerX, float centerY, float radius, int index, int value,
+                             String text, Color color) {
+        g.setColor(isSelectable(value) ? color : PickerUtils.disabledForeground());
         double radians = Math.toRadians(index * 30);
         double x = centerX + Math.sin(radians) * radius;
         double y = centerY - Math.cos(radians) * radius;
