@@ -243,15 +243,16 @@ final class ClockPanel extends JComponent {
      */
     private void paintNumbers(Graphics2D g, float centerX, float centerY, float size, Color color) {
         float outer = size / 2 - scale(OUTER_MARGIN);
+        float inner = size / 2 - scale(INNER_MARGIN);
+        Font font = g.getFont();
+        Font innerFont = hourView && hour24 ? PickerUtils.font(this.size, INNER_FONT_SIZE) : font;
         for (int i = 0; i < 12; i++) {
             if (!hourView) {
                 paintNumber(g, centerX, centerY, outer, i, i * 5, i == 0 ? "00" : String.valueOf(i * 5), color);
             } else if (hour24) {
                 paintNumber(g, centerX, centerY, outer, i, i == 0 ? 12 : i, i == 0 ? "12" : String.valueOf(i), color);
-                Font font = g.getFont();
-                g.setFont(PickerUtils.font(this.size, INNER_FONT_SIZE));
-                paintNumber(g, centerX, centerY, size / 2 - scale(INNER_MARGIN), i, i == 0 ? 0 : i + 12,
-                        i == 0 ? "00" : String.valueOf(i + 12), color);
+                g.setFont(innerFont);
+                paintNumber(g, centerX, centerY, inner, i, i == 0 ? 0 : i + 12, i == 0 ? "00" : String.valueOf(i + 12), color);
                 g.setFont(font);
             } else {
                 // 12 at the top is the first hour of the half of the day

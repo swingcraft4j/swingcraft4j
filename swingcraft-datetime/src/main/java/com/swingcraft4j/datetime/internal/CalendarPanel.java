@@ -286,7 +286,7 @@ public final class CalendarPanel extends JPanel {
         buttonForward.setPickerSize(option.getSize());
         buttonMonth.setPickerSize(option.getSize());
         buttonYear.setPickerSize(option.getSize());
-        slidePanel.setFixedSize(new DayGrid(this, month).getPreferredSize());
+        slidePanel.setFixedSize(DayGrid.getPreferredSize(option.getSize()));
     }
 
     DateOption getOption() {
@@ -305,10 +305,6 @@ public final class CalendarPanel extends JPanel {
 
     DateSelection getSelection() {
         return selection;
-    }
-
-    public YearMonth getMonth() {
-        return month;
     }
 
     /**

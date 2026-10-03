@@ -2,6 +2,7 @@ package com.swingcraft4j.datetime.internal;
 
 import com.formdev.flatlaf.util.ColorFunctions;
 import com.swingcraft4j.datetime.DateRange;
+import com.swingcraft4j.datetime.option.PickerSize;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
@@ -25,15 +26,21 @@ final class DayGrid extends CellGrid {
     private static final float OUTLINE_WIDTH = 1.3f;
     // from the edge of the shape to the line when today is selected
     private static final float OUTLINE_GAP = 2.2f;
+    private static final Dimension CELL_SIZE = new Dimension(38, 34);
 
     private final CalendarPanel calendar;
     private final YearMonth month;
     private final LocalDate firstDate;
     private final DayOfWeek firstDay;
     private final String[] dayNames = new String[DAYS];
+    // if each day can be selected, found when it is asked for the first time: the option can ask
+    // a validator, and the grid asks for each day each time it is painted and the mouse moves
+    private final Boolean[] selectable = new Boolean[DAYS * WEEKS];
+    // today, the same for all the days of one paint
+    private LocalDate today = LocalDate.now();
 
     DayGrid(CalendarPanel calendar, YearMonth month) {
-        super(DAYS, WEEKS + 1, new Dimension(38, 34), calendar.getOption().getSize(), calendar.getOption().getStyleOption());
+        super(DAYS, WEEKS + 1, CELL_SIZE, calendar.getOption().getSize(), calendar.getOption().getStyleOption());
         this.calendar = calendar;
         this.month = month;
         firstDay = calendar.getOption().getFirstDayOfWeek();
@@ -44,12 +51,29 @@ final class DayGrid extends CellGrid {
         }
     }
 
-    YearMonth getMonth() {
-        return month;
+    /**
+     * @return the preferred size of the days of a month, the same for every month
+     */
+    static Dimension getPreferredSize(PickerSize size) {
+        return getPreferredSize(DAYS, WEEKS + 1, CELL_SIZE, size);
     }
 
     private LocalDate getDate(int cell) {
         return firstDate.plusDays(cell - DAYS);
+    }
+
+    private boolean isSelectable(int cell) {
+        int day = cell - DAYS;
+        if (selectable[day] == null) {
+            selectable[day] = calendar.getOption().isSelectable(getDate(cell));
+        }
+        return selectable[day];
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        today = LocalDate.now();
+        super.paintComponent(g);
     }
 
     // false for a day of the month before or after, if the style leaves them out
@@ -67,8 +91,7 @@ final class DayGrid extends CellGrid {
         if (cell < DAYS) {
             return false;
         }
-        LocalDate date = getDate(cell);
-        return isShown(date) && calendar.getOption().isSelectable(date);
+        return isShown(getDate(cell)) && isSelectable(cell);
     }
 
     @Override
@@ -106,7 +129,7 @@ final class DayGrid extends CellGrid {
             g.setColor(background);
             g.fill(shape);
         }
-        if (getStyle().isShowToday() && date.equals(LocalDate.now())) {
+        if (getStyle().isShowToday() && date.equals(today)) {
             PickerUtils.paintCurrentMark(g, shape, selected, scale(OUTLINE_WIDTH), scale(OUTLINE_GAP), getAccentColor());
         }
         if (calendar.isCursorShown() && date.equals(calendar.getCursorDate())) {
@@ -114,7 +137,7 @@ final class DayGrid extends CellGrid {
         }
         if (selected) {
             g.setColor(PickerUtils.accentForeground(getAccentColor()));
-        } else if (!isEnabled() || !YearMonth.from(date).equals(month) || !calendar.getOption().isSelectable(date)) {
+        } else if (!isEnabled() || !YearMonth.from(date).equals(month) || !isSelectable(cell)) {
             g.setColor(PickerUtils.disabledForeground());
         } else if (weekendColor != null && isWeekend(date.getDayOfWeek())) {
             g.setColor(weekendColor);

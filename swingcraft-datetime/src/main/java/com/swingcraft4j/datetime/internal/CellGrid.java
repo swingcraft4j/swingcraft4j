@@ -204,6 +204,14 @@ abstract class CellGrid extends JComponent {
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(Math.round(scale(cellSize.width)) * columns, Math.round(scale(cellSize.height)) * rows);
+        return getPreferredSize(columns, rows, cellSize, size);
+    }
+
+    /**
+     * @return the preferred size of a grid, without making the grid
+     */
+    static Dimension getPreferredSize(int columns, int rows, Dimension cellSize, PickerSize size) {
+        return new Dimension(Math.round(PickerUtils.scale(size, cellSize.width)) * columns,
+                Math.round(PickerUtils.scale(size, cellSize.height)) * rows);
     }
 }

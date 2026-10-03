@@ -167,10 +167,6 @@ public final class SegmentEditor {
         return pattern;
     }
 
-    public Locale getLocale() {
-        return locale;
-    }
-
     /**
      * @return true if the editor has the two dates of a range
      */

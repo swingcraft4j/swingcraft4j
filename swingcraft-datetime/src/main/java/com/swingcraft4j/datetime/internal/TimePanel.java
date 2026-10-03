@@ -320,19 +320,21 @@ public final class TimePanel extends JPanel {
     private void updateSelectable() {
         if (option.getSelectable() == null) {
             clock.setSelectable(null);
-        } else if (hourView) {
-            clock.setSelectable(hour -> {
-                for (int minute = 0; minute < 60; minute++) {
-                    if (option.isSelectable(LocalTime.of(hour, minute))) {
-                        return true;
-                    }
-                }
-                return false;
-            });
-        } else {
-            int hour = time != null ? time.getHour() : (pm ? 12 : 0);
-            clock.setSelectable(minute -> option.isSelectable(LocalTime.of(hour, minute)));
+            return;
         }
+        // found one time here: the clock asks for each of its numbers each time it is painted
+        boolean[] selectable = new boolean[hourView ? 24 : 60];
+        int hour = time != null ? time.getHour() : (pm ? 12 : 0);
+        for (int value = 0; value < selectable.length; value++) {
+            if (hourView) {
+                for (int minute = 0; minute < 60 && !selectable[value]; minute++) {
+                    selectable[value] = option.isSelectable(LocalTime.of(value, minute));
+                }
+            } else {
+                selectable[value] = option.isSelectable(LocalTime.of(hour, value));
+            }
+        }
+        clock.setSelectable(value -> selectable[value]);
     }
 
     private void updateHeader() {

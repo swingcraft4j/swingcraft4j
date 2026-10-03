@@ -57,6 +57,11 @@ public abstract class PickerField<T> extends JTextField {
     private FieldValidator<T> validator;
     // what the validator said about what is typed, null if it said nothing or was not asked
     private ValidationResult validationResult;
+    // what the validator was asked about last, it is asked again when the input is another one
+    private T validatedInput;
+    private boolean validated;
+    // the icon that is shown for what the validator said
+    private PickerIcon.Type statusIcon;
     // what the listeners were told last
     private T firedValue;
     // the preferred width when the field was laid out last
@@ -188,10 +193,7 @@ public abstract class PickerField<T> extends JTextField {
         SegmentEditor newEditor = createEditor(pattern, option, this::editorChanged);
         newEditor.setStableWidth(option.isStableWidth());
         checkPattern(newEditor);
-        // the pickers are made again with the new option when they are shown
-        closePopup();
-        datePicker = null;
-        timePicker = null;
+        resetPickers();
         T old = editor != null ? read(editor) : null;
         this.option = option;
         this.editor = newEditor;
@@ -265,10 +267,8 @@ public abstract class PickerField<T> extends JTextField {
      */
     public void setValidator(FieldValidator<T> validator) {
         this.validator = validator;
-        // the pickers are made again with what can be selected
-        closePopup();
-        datePicker = null;
-        timePicker = null;
+        validated = false;
+        resetPickers();
         editorChanged();
     }
 
@@ -325,14 +325,20 @@ public abstract class PickerField<T> extends JTextField {
 
     /**
      * Finds the value of the field from what is typed, and shows what the validator says about it.
+     * The validator is asked when the input is another one, not for each key: a move to another segment
+     * does not change the input.
      *
-     * @param validateEmpty true to ask the validator also when the field has nothing to check
+     * @param validateEmpty true to ask the validator now, also when the field has nothing to check
      */
     private void update(boolean validateEmpty) {
         T input = read(editor);
-        validationResult = validator != null && (input != null || validateEmpty) ? validator.validate(input) : null;
+        if (validateEmpty || !validated || !Objects.equals(input, validatedInput)) {
+            validationResult = validator != null && (input != null || validateEmpty) ? validator.validate(input) : null;
+            validatedInput = input;
+            validated = true;
+        }
         value = input != null && isAllowed(validationResult) ? input : null;
-        updateStatus();
+        updateStatus(input);
         boolean clear = option.isShowClearButton() && !editor.isEmpty();
         if (buttonClear.isVisible() != clear) {
             buttonClear.setVisible(clear);
@@ -345,7 +351,9 @@ public abstract class PickerField<T> extends JTextField {
             revalidate();
         }
         repaint();
-        syncPickers();
+        if (isPopupVisible()) {
+            syncPickers();
+        }
         if (!Objects.equals(value, firedValue)) {
             firedValue = value;
             ChangeEvent event = new ChangeEvent(this);
@@ -356,7 +364,7 @@ public abstract class PickerField<T> extends JTextField {
     }
 
     // the color of the border and the icon in the field
-    private void updateStatus() {
+    private void updateStatus(T input) {
         String outline = null;
         PickerIcon.Type icon = null;
         if (validationResult != null) {
@@ -374,16 +382,19 @@ public abstract class PickerField<T> extends JTextField {
                     icon = PickerIcon.Type.SUCCESS;
                     break;
             }
-        } else if (editor.isComplete() && read(editor) == null) {
+        } else if (input == null && editor.isComplete()) {
             // every segment has a value, but together they are no value: the 31 of a month with 30 days
             outline = FlatClientProperties.OUTLINE_ERROR;
         }
         putClientProperty(FlatClientProperties.OUTLINE, outline);
         boolean visible = icon != null;
         if (visible) {
-            labelStatus.setIcon(new PickerIcon(icon));
+            if (icon != statusIcon) {
+                labelStatus.setIcon(new PickerIcon(icon));
+            }
             labelStatus.setToolTipText(validationResult.getMessage());
         }
+        statusIcon = icon;
         if (labelStatus.isVisible() != visible) {
             labelStatus.setVisible(visible);
             revalidate();
@@ -404,6 +415,13 @@ public abstract class PickerField<T> extends JTextField {
     }
 
     // ---- popup
+
+    // the pickers are made again when they are shown: with another option, or another validator
+    private void resetPickers() {
+        closePopup();
+        datePicker = null;
+        timePicker = null;
+    }
 
     void showDatePopup() {
         if (!editor.hasDate() || !isShowing() || !isEnabled()) {
@@ -487,7 +505,7 @@ public abstract class PickerField<T> extends JTextField {
         return (datePicker != null && datePicker.isPopupVisible()) || (timePicker != null && timePicker.isPopupVisible());
     }
 
-    // the pickers show what the field has
+    // the pickers show what the field has. It is called before a popup is shown, and while one is showing
     private void syncPickers() {
         if (syncing) {
             return;
