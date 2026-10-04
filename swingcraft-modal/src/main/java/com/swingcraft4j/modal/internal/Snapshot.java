@@ -69,11 +69,9 @@ final class Snapshot {
         double scaleX = transform.getScaleX();
         double scaleY = transform.getScaleY();
 
-        // the part of a pixel the real components start at, the window itself starts at a whole pixel
-        Window window = SwingUtilities.getWindowAncestor(component);
-        Point location = window == null ? new Point(x, y) : SwingUtilities.convertPoint(component, x, y, window);
-        double startX = getPartOfPixel(location.x * scaleX);
-        double startY = getPartOfPixel(location.y * scaleY);
+        Point2D start = getStart(component, x, y, scaleX, scaleY);
+        double startX = start.getX();
+        double startY = start.getY();
 
         int imageWidth = (int) Math.ceil(width * scaleX + startX);
         int imageHeight = (int) Math.ceil(height * scaleY + startY);
@@ -108,6 +106,18 @@ final class Snapshot {
             g.dispose();
         }
         return new Snapshot(image, configuration, width, height, scaleX, scaleY, startX, startY);
+    }
+
+    /**
+     * @return the part of a pixel the real components start at. It is counted from the root pane: the content
+     * of a window starts at a whole pixel. The window itself is not the start: its border has a whole number
+     * of pixels of the screen, and that is not a whole number in the size of the components. A border of
+     * 6 is 7.5 pixels at 125%, and everything in the window would be counted half a pixel off
+     */
+    private static Point2D getStart(Component component, int x, int y, double scaleX, double scaleY) {
+        JRootPane rootPane = SwingUtilities.getRootPane(component);
+        Point location = rootPane == null ? new Point(x, y) : SwingUtilities.convertPoint(component, x, y, rootPane);
+        return new Point2D.Double(getPartOfPixel(location.x * scaleX), getPartOfPixel(location.y * scaleY));
     }
 
     private static double getPartOfPixel(double value) {
