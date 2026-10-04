@@ -15,8 +15,8 @@ import java.util.List;
  * How far behind a toast is, its depth, is the sum of how far the newer toasts are shown. So while a new toast
  * is shown the others move one step back, and while a toast closes the ones behind it come one step forward.
  * <p>
- * All toasts of the stack have the same width, the width of the widest, so none is visible at the sides
- * of the toast in front.
+ * The toast in front has its own width. The toasts behind it have the width of the toast in front, so none is
+ * visible at the sides of it, and a small toast in front of a large one is not made larger.
  * <p>
  * A stack can be expanded: then the toasts are shown one after the other, as a list, all of them as they are.
  * Each toast is placed between its place in the stack and its place in the list, by how far the stack
@@ -30,20 +30,22 @@ final class StackArranger extends ToastArranger {
         boolean top = option.getLocation().isTop();
         Insets margin = getMargin(toasts.get(0), leftToRight);
         int availableWidth = area.width - (margin.left + margin.right);
-        float stackOffset = UIScale.scale((float) option.getStackOffset());
-        float gap = UIScale.scale((float) option.getGap());
+        // whole numbers: with an offset of 12.5 the toasts that move together are rounded to different sides,
+        // and the space between them changes by a pixel while they move
+        int stackOffset = UIScale.scale(option.getStackOffset());
+        int gap = UIScale.scale(option.getGap());
         int maxVisible = option.getStackMaxVisible();
         float alignment = option.getLocation().getAlignment(leftToRight);
 
-        // the width of the stack and the height of the toast in front. Each toast counts as far as it is shown,
+        // the width and the height of the toast in front. Each toast counts as far as it is shown,
         // from the oldest to the newest, so both change smoothly while a toast is shown or closed
         Dimension[] sizes = new Dimension[toasts.size()];
-        float stackWidth = 0;
+        float frontWidth = 0;
         float frontHeight = 0;
         for (int i = toasts.size() - 1; i >= 0; i--) {
             sizes[i] = getSize(toasts.get(i), availableWidth);
             float progress = toasts.get(i).getProgress();
-            stackWidth += (Math.max(stackWidth, sizes[i].width) - stackWidth) * progress;
+            frontWidth += (sizes[i].width - frontWidth) * progress;
             frontHeight += (sizes[i].height - frontHeight) * progress;
         }
 
@@ -53,9 +55,11 @@ final class StackArranger extends ToastArranger {
         float listEdge = edge;
         for (int i = 0; i < toasts.size(); i++) {
             ToastPanel toast = toasts.get(i);
-            int width = Math.max(Math.round(stackWidth), sizes[i].width);
             int height = sizes[i].height;
             float visibleDepth = Math.min(depth, maxVisible);
+            // in front its own width, one step behind the width of the toast in front. Expanded its own width
+            float stackWidth = sizes[i].width + (frontWidth - sizes[i].width) * Math.min(depth, 1);
+            int width = Math.round(stackWidth + (sizes[i].width - stackWidth) * expand);
 
             // in the stack: in front the toast is at the edge. Behind, its far edge is one offset further for each step
             float frontY = top ? edge : edge - height;

@@ -30,7 +30,9 @@ final class ListArranger extends ToastArranger {
         boolean top = option.getLocation().isTop();
         Insets margin = getMargin(toasts.get(0), leftToRight);
         int availableWidth = area.width - (margin.left + margin.right);
-        float gap = UIScale.scale((float) option.getGap());
+        // a whole number: with a gap of 12.5 the toasts that move together are rounded to different sides,
+        // and the space between them changes by a pixel while they move
+        int gap = UIScale.scale(option.getGap());
         float alignment = option.getLocation().getAlignment(leftToRight);
 
         List<ToastPanel> ordered = toasts;
