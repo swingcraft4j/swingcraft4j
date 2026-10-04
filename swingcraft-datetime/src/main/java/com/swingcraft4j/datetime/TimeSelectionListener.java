@@ -4,7 +4,7 @@ import java.util.EventListener;
 
 /**
  * Listens to the selection of a time picker. Add it with
- * {@link TimePicker#addTimeSelectionListener(TimeSelectionListener)}.
+ * {@link JTimePicker#addTimeSelectionListener(TimeSelectionListener)}.
  */
 public interface TimeSelectionListener extends EventListener {
 

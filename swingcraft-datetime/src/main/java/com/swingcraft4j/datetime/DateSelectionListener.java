@@ -4,7 +4,7 @@ import java.util.EventListener;
 
 /**
  * Listens to the selection of a date picker. Add it with
- * {@link DatePicker#addDateSelectionListener(DateSelectionListener)}.
+ * {@link JDatePicker#addDateSelectionListener(DateSelectionListener)}.
  */
 public interface DateSelectionListener extends EventListener {
 

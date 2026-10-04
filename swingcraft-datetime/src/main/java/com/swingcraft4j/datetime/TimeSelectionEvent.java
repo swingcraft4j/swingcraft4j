@@ -10,13 +10,13 @@ public class TimeSelectionEvent extends EventObject {
 
     private final LocalTime time;
 
-    public TimeSelectionEvent(TimePicker source, LocalTime time) {
+    public TimeSelectionEvent(JTimePicker source, LocalTime time) {
         super(source);
         this.time = time;
     }
 
-    public TimePicker getTimePicker() {
-        return (TimePicker) getSource();
+    public JTimePicker getTimePicker() {
+        return (JTimePicker) getSource();
     }
 
     /**

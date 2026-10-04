@@ -11,11 +11,11 @@ import java.util.function.Predicate;
  * with {@code HH} gives a time and a clock with 24 hours. A time its validator has an error for can not be
  * selected in the popup.
  *
- * @see PickerField
+ * @see JPickerField
  */
-public class TimeField extends PickerField<LocalTime> {
+public class JTimeField extends JPickerField<LocalTime> {
 
-    public TimeField() {
+    public JTimeField() {
         this(getDefaultOption());
     }
 
@@ -23,7 +23,7 @@ public class TimeField extends PickerField<LocalTime> {
      * @param option the option, it is copied
      * @throws IllegalArgumentException if the pattern of the option has a date
      */
-    public TimeField(FieldOption option) {
+    public JTimeField(FieldOption option) {
         super(option);
     }
 

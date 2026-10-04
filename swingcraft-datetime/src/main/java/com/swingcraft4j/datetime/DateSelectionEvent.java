@@ -11,14 +11,14 @@ public class DateSelectionEvent extends EventObject {
     private final LocalDate date;
     private final DateRange dateRange;
 
-    public DateSelectionEvent(DatePicker source, LocalDate date, DateRange dateRange) {
+    public DateSelectionEvent(JDatePicker source, LocalDate date, DateRange dateRange) {
         super(source);
         this.date = date;
         this.dateRange = dateRange;
     }
 
-    public DatePicker getDatePicker() {
-        return (DatePicker) getSource();
+    public JDatePicker getDatePicker() {
+        return (JDatePicker) getSource();
     }
 
     /**

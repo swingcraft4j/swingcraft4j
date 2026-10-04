@@ -13,11 +13,11 @@ import java.time.LocalDateTime;
  * them has only a part of the value: set what can be selected there with the date option and the time
  * option of the field.
  *
- * @see PickerField
+ * @see JPickerField
  */
-public class DateTimeField extends PickerField<LocalDateTime> {
+public class JDateTimeField extends JPickerField<LocalDateTime> {
 
-    public DateTimeField() {
+    public JDateTimeField() {
         this(getDefaultOption());
     }
 
@@ -25,7 +25,7 @@ public class DateTimeField extends PickerField<LocalDateTime> {
      * @param option the option, it is copied
      * @throws IllegalArgumentException if the pattern of the option has no date or no time
      */
-    public DateTimeField(FieldOption option) {
+    public JDateTimeField(FieldOption option) {
         super(option);
     }
 

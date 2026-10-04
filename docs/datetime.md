@@ -60,11 +60,11 @@ All the methods of the pickers must be called on the event dispatch thread.
 
 ## Date picker
 
-`DatePicker` is a calendar to select a date. It is a component: add it to a container, or show it in a
+`JDatePicker` is a calendar to select a date. It is a component: add it to a container, or show it in a
 [popup](#popup).
 
 ```java
-DatePicker datePicker = new DatePicker();
+JDatePicker datePicker = new JDatePicker();
 datePicker.setSelectedDate(LocalDate.now());
 datePicker.addDateSelectionListener(e -> {
     LocalDate date = e.getDate();
@@ -103,7 +103,7 @@ With `DateSelectionMode.RANGE` the picker selects a range of dates: the first cl
 second click the end. The two can be clicked in any order.
 
 ```java
-DatePicker datePicker = new DatePicker(new DateOption()
+JDatePicker datePicker = new JDatePicker(new DateOption()
         .setSelectionMode(DateSelectionMode.RANGE));
 
 datePicker.setSelectedDateRange(LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 16));
@@ -147,7 +147,7 @@ DateOption option = new DateOption()
         .setFirstDayOfWeek(DayOfWeek.MONDAY)
         .setCloseOnSelect(true);
 
-DatePicker datePicker = new DatePicker(option);
+JDatePicker datePicker = new JDatePicker(option);
 ```
 
 | Setter                         | Default          | What it does                                                    |
@@ -166,12 +166,12 @@ DatePicker datePicker = new DatePicker(option);
 
 ## Time picker
 
-`TimePicker` is a clock to select a time, the hour and the minute. The clock shows the hours first, and the
+`JTimePicker` is a clock to select a time, the hour and the minute. The clock shows the hours first, and the
 minutes when an hour is selected. Drag the hand, or click a number. The header shows the time: a click on
 the hour or the minute shows it on the clock, and AM and PM select the half of the day.
 
 ```java
-TimePicker timePicker = new TimePicker();
+JTimePicker timePicker = new JTimePicker();
 timePicker.setSelectedTime(LocalTime.of(9, 30));
 timePicker.addTimeSelectionListener(e -> {
     LocalTime time = e.getTime();
@@ -202,7 +202,7 @@ TimeOption option = new TimeOption()
         .setHour24(true)
         .setCloseOnSelect(true);
 
-TimePicker timePicker = new TimePicker(option);
+JTimePicker timePicker = new JTimePicker(option);
 ```
 
 | Setter                       | Default | What it does                                                       |
@@ -240,7 +240,7 @@ A date picker can show ranges of dates with a name next to its calendar, as "Las
 selects its range. The preset that has the selection of the picker is shown as selected.
 
 ```java
-DatePicker datePicker = new DatePicker(new DateOption()
+JDatePicker datePicker = new JDatePicker(new DateOption()
         .setSelectionMode(DateSelectionMode.RANGE)
         .setPresets(DatePreset.defaults()));
 ```
@@ -313,24 +313,24 @@ there is selected in the picker.
 A field is a text field to type a date or a time, with a button that shows the picker in a popup. There are
 four of them, one for each kind of value.
 
-| Field            | Value           | Default pattern           | Popup                           |
-|------------------|-----------------|---------------------------|---------------------------------|
-| `DateField`      | `LocalDate`     | `dd/MM/yyyy`              | The date picker                 |
-| `TimeField`      | `LocalTime`     | `hh:mm a`                 | The time picker                 |
-| `DateTimeField`  | `LocalDateTime` | `dd/MM/yyyy hh:mm a`      | One button for each picker      |
-| `DateRangeField` | `DateRange`     | `dd/MM/yyyy - dd/MM/yyyy` | The date picker, with a range   |
+| Field             | Value           | Default pattern           | Popup                           |
+|-------------------|-----------------|---------------------------|---------------------------------|
+| `JDateField`      | `LocalDate`     | `dd/MM/yyyy`              | The date picker                 |
+| `JTimeField`      | `LocalTime`     | `hh:mm a`                 | The time picker                 |
+| `JDateTimeField`  | `LocalDateTime` | `dd/MM/yyyy hh:mm a`      | One button for each picker      |
+| `JDateRangeField` | `DateRange`     | `dd/MM/yyyy - dd/MM/yyyy` | The date picker, with a range   |
 
 ```java
-DateField dateField = new DateField();
+JDateField dateField = new JDateField();
 dateField.setSelectedDate(LocalDate.now());
 dateField.addChangeListener(e -> {
     LocalDate date = dateField.getSelectedDate();
 });
 
-TimeField timeField = new TimeField();
+JTimeField timeField = new JTimeField();
 LocalTime time = timeField.getSelectedTime();
 
-DateTimeField dateTimeField = new DateTimeField();
+JDateTimeField dateTimeField = new JDateTimeField();
 LocalDateTime dateTime = dateTimeField.getSelectedDateTime();
 ```
 
@@ -363,14 +363,14 @@ outline of the look and feel.
 
 | Method                         | What it does                                                             |
 |--------------------------------|--------------------------------------------------------------------------|
-| `getSelectedDate()`            | `DateField`: the date, or null                                           |
-| `setSelectedDate(LocalDate)`   | `DateField`: sets the date, null clears the field                        |
-| `getSelectedTime()`            | `TimeField`: the time, or null                                           |
-| `setSelectedTime(LocalTime)`   | `TimeField`: sets the time, null clears the field                        |
-| `getSelectedDateTime()`        | `DateTimeField`: the date and the time, or null                          |
-| `setSelectedDateTime(LocalDateTime)` | `DateTimeField`: sets both, null clears the field                  |
-| `getSelectedDateRange()`       | `DateRangeField`: the range, or null                                     |
-| `setSelectedDateRange(DateRange)` | `DateRangeField`: sets the range, null clears the field. Also with the two dates |
+| `getSelectedDate()`            | `JDateField`: the date, or null                                          |
+| `setSelectedDate(LocalDate)`   | `JDateField`: sets the date, null clears the field                       |
+| `getSelectedTime()`            | `JTimeField`: the time, or null                                          |
+| `setSelectedTime(LocalTime)`   | `JTimeField`: sets the time, null clears the field                       |
+| `getSelectedDateTime()`        | `JDateTimeField`: the date and the time, or null                         |
+| `setSelectedDateTime(LocalDateTime)` | `JDateTimeField`: sets both, null clears the field                 |
+| `getSelectedDateRange()`       | `JDateRangeField`: the range, or null                                    |
+| `setSelectedDateRange(DateRange)` | `JDateRangeField`: sets the range, null clears the field. Also with the two dates |
 | `clear()`                      | Removes what is typed                                                    |
 | `isInputEmpty()`               | True if nothing is typed                                                 |
 | `isInputValid()`               | True if the field is empty or has a value, false while it is filled in part |
@@ -385,21 +385,21 @@ outline of the look and feel.
 The button of the field shows its picker below the field. A date or a time that is selected there goes into
 the field, and the popup closes. What is typed in the field is selected in the picker.
 
-| Method              | What it does                                          |
-|---------------------|-------------------------------------------------------|
-| `showPopup()`       | `DateField`, `TimeField` and `DateRangeField`: shows the picker |
-| `showDatePopup()`   | `DateTimeField`: shows the date picker                |
-| `showTimePopup()`   | `DateTimeField`: shows the time picker                |
-| `closePopup()`      | Closes the popup                                      |
-| `isPopupVisible()`  | True if the popup is showing                          |
+| Method              | What it does                                                       |
+|---------------------|--------------------------------------------------------------------|
+| `showPopup()`       | `JDateField`, `JTimeField` and `JDateRangeField`: shows the picker |
+| `showDatePopup()`   | `JDateTimeField`: shows the date picker                            |
+| `showTimePopup()`   | `JDateTimeField`: shows the time picker                            |
+| `closePopup()`      | Closes the popup                                                   |
+| `isPopupVisible()`  | True if the popup is showing                                       |
 
 ### Date range field
 
-`DateRangeField` has the first and the last date of a range in one field, with a separator between them.
+`JDateRangeField` has the first and the last date of a range in one field, with a separator between them.
 Its popup has the date picker that selects a range.
 
 ```java
-DateRangeField rangeField = new DateRangeField();
+JDateRangeField rangeField = new JDateRangeField();
 rangeField.setSelectedDateRange(LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 16));
 rangeField.addChangeListener(e -> {
     DateRange range = rangeField.getSelectedDateRange();
@@ -410,7 +410,7 @@ The pattern of the option is the pattern of one date, the two dates have the sam
 `setRangeSeparator` of the option:
 
 ```java
-new DateRangeField(new FieldOption()
+new JDateRangeField(new FieldOption()
         .setPattern("dd MMM yyyy")
         .setRangeSeparator(" to "));
 ```
@@ -468,9 +468,9 @@ if (dateField.validateInput()) {
 | `isInputValid()`        | True if the field is empty or has a value, and the validator has no error      |
 | `getValidationResult()` | What the validator said, or null                                               |
 
-In the popup of a `DateField` and a `TimeField`, the dates and the times the validator has an error for can
-not be selected. The validator of a `DateTimeField` gets the date and the time together, and the one of
-a `DateRangeField` the whole range, so the pickers of their popup do not know it: set what can be selected
+In the popup of a `JDateField` and a `JTimeField`, the dates and the times the validator has an error for can
+not be selected. The validator of a `JDateTimeField` gets the date and the time together, and the one of
+a `JDateRangeField` the whole range, so the pickers of their popup do not know it: set what can be selected
 there with `setSelectable` of the date option and the time option of the field.
 
 ### Commit mode
@@ -479,7 +479,7 @@ The commit mode says what the field does with what is typed when it loses the fo
 filled in part, has a date that does not exist, or its validator has an error.
 
 ```java
-new DateField(new FieldOption().setCommitMode(CommitMode.REVERT));
+new JDateField(new FieldOption().setCommitMode(CommitMode.REVERT));
 ```
 
 | `CommitMode` | What it does                                                               |
@@ -500,13 +500,13 @@ option.getDateOption()
         .setFirstDayOfWeek(DayOfWeek.MONDAY)
         .setSize(PickerSize.SMALL);
 
-DateField dateField = new DateField(option);
+JDateField dateField = new JDateField(option);
 ```
 
 | Setter                         | Default | What it does                                                         |
 |--------------------------------|---------|----------------------------------------------------------------------|
 | `setPattern(String)`           | `null`  | What the field shows and what is typed, null for the default pattern |
-| `setRangeSeparator(String)`    | `" - "` | The text between the two dates of a `DateRangeField`                 |
+| `setRangeSeparator(String)`    | `" - "` | The text between the two dates of a `JDateRangeField`                |
 | `setLocale(Locale)`            | `null`  | The language of the names and of AM and PM, in the field and in the popup |
 | `setShowPickerButton(boolean)` | `true`  | False hides the button of the popup, the keyboard still shows it     |
 | `setShowClearButton(boolean)`  | `false` | Shows a button that removes what is typed, while the field is not empty |
@@ -516,7 +516,7 @@ DateField dateField = new DateField(option);
 | `setTimeOption(TimeOption)`    |         | The option of the time picker in the popup                           |
 
 The two picker options close the popup on select by default. The field sets three things of them itself: the
-date picker selects one date, or a range in a `DateRangeField`, the clock has 12 or 24 hours as the pattern
+date picker selects one date, or a range in a `JDateRangeField`, the clock has 12 or 24 hours as the pattern
 has, and the locale is the one of the field option.
 
 ### Pattern
@@ -545,8 +545,8 @@ new FieldOption().setPattern("yyyy-MM-dd");
 ```
 
 A month with a name is typed as its number, or changed with the up and down keys. A pattern can have each
-part one time. A `DateField` and a `DateRangeField` can not have a time in their pattern, a `TimeField` no
-date, and a `DateTimeField` needs both: the constructor and `setOption` throw `IllegalArgumentException`
+part one time. A `JDateField` and a `JDateRangeField` can not have a time in their pattern, a `JTimeField` no
+date, and a `JDateTimeField` needs both: the constructor and `setOption` throw `IllegalArgumentException`
 if not.
 
 ## Size
@@ -554,8 +554,8 @@ if not.
 Both pickers have four sizes. The size sets how large the cells, the clock and the text are.
 
 ```java
-DatePicker datePicker = new DatePicker(new DateOption().setSize(PickerSize.SMALL));
-TimePicker timePicker = new TimePicker(new TimeOption().setSize(PickerSize.LARGE));
+JDatePicker datePicker = new JDatePicker(new DateOption().setSize(PickerSize.SMALL));
+JTimePicker timePicker = new JTimePicker(new TimeOption().setSize(PickerSize.LARGE));
 ```
 
 | `PickerSize` | What it is                          |
@@ -609,7 +609,7 @@ fieldOption.getDateOption().getStyleOption().setColor(new Color(0x16A34A));
 Both pickers can be shown in a popup at a component, for example a button.
 
 ```java
-DatePicker datePicker = new DatePicker(new DateOption().setCloseOnSelect(true));
+JDatePicker datePicker = new JDatePicker(new DateOption().setCloseOnSelect(true));
 datePicker.addDateSelectionListener(e -> button.setText(String.valueOf(e.getDate())));
 
 button.addActionListener(e -> datePicker.showPopup(button));
@@ -651,15 +651,15 @@ The animation is also off when the system property `flatlaf.animation` is `false
 A picker created without an option uses the default option.
 
 ```java
-DatePicker.getDefaultOption()
+JDatePicker.getDefaultOption()
         .setFirstDayOfWeek(DayOfWeek.MONDAY);
 
-TimePicker.getDefaultOption()
+JTimePicker.getDefaultOption()
         .setHour24(true);
 ```
 
-`DatePicker.setDefaultOption(option)` and `TimePicker.setDefaultOption(option)` change it for all the pickers
-that are created later. `createOption()` gives a copy of the default option, to change for one picker.
+`JDatePicker.setDefaultOption(option)` and `JTimePicker.setDefaultOption(option)` change it for all the
+pickers that are created later. `createOption()` gives a copy of the default option, to change for one picker.
 
-The fields have one default option together: `PickerField.getDefaultOption()`,
-`PickerField.setDefaultOption(option)` and `PickerField.createOption()`.
+The fields have one default option together: `JPickerField.getDefaultOption()`,
+`JPickerField.setDefaultOption(option)` and `JPickerField.createOption()`.

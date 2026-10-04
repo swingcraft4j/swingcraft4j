@@ -17,7 +17,7 @@ import java.util.Objects;
  * Add it to a container as any component, or show it in a popup with {@link #showPopup(Component)}.
  * All methods must be called on the event dispatch thread.
  */
-public class TimePicker extends JPanel {
+public class JTimePicker extends JPanel {
 
     private static TimeOption defaultOption = new TimeOption();
 
@@ -27,14 +27,14 @@ public class TimePicker extends JPanel {
     // what the listeners were told last
     private LocalTime firedTime;
 
-    public TimePicker() {
+    public JTimePicker() {
         this(defaultOption);
     }
 
     /**
      * @param option the option, it is copied
      */
-    public TimePicker(TimeOption option) {
+    public JTimePicker(TimeOption option) {
         if (option == null) {
             throw new IllegalArgumentException("option must not null");
         }
@@ -47,7 +47,7 @@ public class TimePicker extends JPanel {
 
             @Override
             public void timeSelected() {
-                if (TimePicker.this.option.isCloseOnSelect()) {
+                if (JTimePicker.this.option.isCloseOnSelect()) {
                     closePopup();
                 }
             }

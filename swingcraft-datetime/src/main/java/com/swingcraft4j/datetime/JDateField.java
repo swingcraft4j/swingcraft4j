@@ -10,11 +10,11 @@ import java.util.function.Predicate;
  * A field to type a date, with a date picker in its popup. Its default pattern is {@code dd/MM/yyyy}.
  * A date its validator has an error for can not be selected in the popup.
  *
- * @see PickerField
+ * @see JPickerField
  */
-public class DateField extends PickerField<LocalDate> {
+public class JDateField extends JPickerField<LocalDate> {
 
-    public DateField() {
+    public JDateField() {
         this(getDefaultOption());
     }
 
@@ -22,7 +22,7 @@ public class DateField extends PickerField<LocalDate> {
      * @param option the option, it is copied
      * @throws IllegalArgumentException if the pattern of the option has a time
      */
-    public DateField(FieldOption option) {
+    public JDateField(FieldOption option) {
         super(option);
     }
 

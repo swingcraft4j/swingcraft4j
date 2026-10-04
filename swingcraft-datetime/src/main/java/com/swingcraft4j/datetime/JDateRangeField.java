@@ -15,11 +15,11 @@ import java.time.LocalDate;
  * Its validator gets the whole range, so the picker of the popup does not know it: set what can be selected
  * there with the date option of the field.
  *
- * @see PickerField
+ * @see JPickerField
  */
-public class DateRangeField extends PickerField<DateRange> {
+public class JDateRangeField extends JPickerField<DateRange> {
 
-    public DateRangeField() {
+    public JDateRangeField() {
         this(getDefaultOption());
     }
 
@@ -27,7 +27,7 @@ public class DateRangeField extends PickerField<DateRange> {
      * @param option the option, it is copied
      * @throws IllegalArgumentException if the pattern of the option has a time
      */
-    public DateRangeField(FieldOption option) {
+    public JDateRangeField(FieldOption option) {
         super(option);
     }
 
@@ -67,7 +67,7 @@ public class DateRangeField extends PickerField<DateRange> {
     }
 
     @Override
-    void syncDatePicker(DatePicker datePicker) {
+    void syncDatePicker(JDatePicker datePicker) {
         // the picker shows a range when the field has one, a range that is typed in part is not shown
         DateRange range = read(getEditor());
         if (range != null) {

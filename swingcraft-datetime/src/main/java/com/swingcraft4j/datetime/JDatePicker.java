@@ -20,7 +20,7 @@ import java.util.Objects;
  * Add it to a container as any component, or show it in a popup with {@link #showPopup(Component)}.
  * All methods must be called on the event dispatch thread.
  */
-public class DatePicker extends JPanel {
+public class JDatePicker extends JPanel {
 
     private static DateOption defaultOption = new DateOption();
 
@@ -32,14 +32,14 @@ public class DatePicker extends JPanel {
     // what the listeners were told last: a date, a range or null
     private Object firedValue;
 
-    public DatePicker() {
+    public JDatePicker() {
         this(defaultOption);
     }
 
     /**
      * @param option the option, it is copied
      */
-    public DatePicker(DateOption option) {
+    public JDatePicker(DateOption option) {
         if (option == null) {
             throw new IllegalArgumentException("option must not null");
         }

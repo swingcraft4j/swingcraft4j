@@ -30,9 +30,9 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
- * The base of the fields to type a date or a time: {@link DateField}, {@link TimeField},
- * {@link DateTimeField} and {@link DateRangeField}. The field has a segment for each part of its pattern, as the day, the month and
- * the year, and a button that shows a picker in a popup.
+ * The base of the fields to type a date or a time: {@link JDateField}, {@link JTimeField},
+ * {@link JDateTimeField} and {@link JDateRangeField}. The field has a segment for each part of its pattern,
+ * as the day, the month and the year, and a button that shows a picker in a popup.
  * <p>
  * One segment is selected at a time. Digits are typed into it, the left and right keys select another
  * segment, the up and down keys change its value, and backspace and delete remove it. Alt and down, or F4,
@@ -43,7 +43,7 @@ import java.util.function.Predicate;
  *
  * @param <T> the value of the field
  */
-public abstract class PickerField<T> extends JTextField {
+public abstract class JPickerField<T> extends JTextField {
 
     private static FieldOption defaultOption = new FieldOption();
 
@@ -70,8 +70,8 @@ public abstract class PickerField<T> extends JTextField {
     private int lastSelected = -1;
     // true while the field and a picker are set to the same value, so one does not answer the other
     private boolean syncing;
-    private DatePicker datePicker;
-    private TimePicker timePicker;
+    private JDatePicker datePicker;
+    private JTimePicker timePicker;
 
     private JToolBar toolBar;
     // the icon of what the validator said, its message is the tool tip
@@ -80,7 +80,7 @@ public abstract class PickerField<T> extends JTextField {
     private JButton buttonDate;
     private JButton buttonTime;
 
-    PickerField(FieldOption option) {
+    JPickerField(FieldOption option) {
         if (option == null) {
             throw new IllegalArgumentException("option must not null");
         }
@@ -155,7 +155,7 @@ public abstract class PickerField<T> extends JTextField {
     /**
      * The date picker of the popup shows what the field has.
      */
-    void syncDatePicker(DatePicker datePicker) {
+    void syncDatePicker(JDatePicker datePicker) {
         datePicker.setSelectedDate(editor.getDate());
     }
 
@@ -437,7 +437,7 @@ public abstract class PickerField<T> extends JTextField {
                 Predicate<LocalDate> selectable = dateOption.getSelectable();
                 dateOption.setSelectable(selectable != null ? selectable.and(popupDates) : popupDates);
             }
-            datePicker = new DatePicker(dateOption);
+            datePicker = new JDatePicker(dateOption);
             datePicker.addDateSelectionListener(e -> {
                 if (!syncing) {
                     syncing = true;
@@ -467,7 +467,7 @@ public abstract class PickerField<T> extends JTextField {
                 Predicate<LocalTime> selectable = timeOption.getSelectable();
                 timeOption.setSelectable(selectable != null ? selectable.and(popupTimes) : popupTimes);
             }
-            timePicker = new TimePicker(timeOption);
+            timePicker = new JTimePicker(timeOption);
             timePicker.addTimeSelectionListener(e -> {
                 if (!syncing) {
                     syncing = true;

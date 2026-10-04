@@ -1,14 +1,14 @@
 package com.swingcraft4j.demo;
 
-import com.swingcraft4j.datetime.DateField;
-import com.swingcraft4j.datetime.DatePicker;
+import com.swingcraft4j.datetime.JDateField;
+import com.swingcraft4j.datetime.JDatePicker;
 import com.swingcraft4j.datetime.DatePreset;
 import com.swingcraft4j.datetime.DateRange;
-import com.swingcraft4j.datetime.DateRangeField;
+import com.swingcraft4j.datetime.JDateRangeField;
 import com.swingcraft4j.datetime.DateSelectionEvent;
-import com.swingcraft4j.datetime.DateTimeField;
-import com.swingcraft4j.datetime.TimeField;
-import com.swingcraft4j.datetime.TimePicker;
+import com.swingcraft4j.datetime.JDateTimeField;
+import com.swingcraft4j.datetime.JTimeField;
+import com.swingcraft4j.datetime.JTimePicker;
 import com.swingcraft4j.datetime.ValidationResult;
 import com.swingcraft4j.datetime.option.CommitMode;
 import com.swingcraft4j.datetime.option.DateOption;
@@ -47,14 +47,14 @@ public class DateTimeDemo extends JPanel {
     private static final String VALUE_LABEL = "growx,width 0:0";
 
     // a picker is used in the window or in a popup, so there are two of each
-    private final DatePicker datePicker = new DatePicker();
-    private final DatePicker datePopup = new DatePicker();
-    private final TimePicker timePicker = new TimePicker();
-    private final TimePicker timePopup = new TimePicker();
-    private final DateField dateField = new DateField();
-    private final TimeField timeField = new TimeField();
-    private final DateTimeField dateTimeField = new DateTimeField();
-    private final DateRangeField dateRangeField = new DateRangeField();
+    private final JDatePicker datePicker = new JDatePicker();
+    private final JDatePicker datePopup = new JDatePicker();
+    private final JTimePicker timePicker = new JTimePicker();
+    private final JTimePicker timePopup = new JTimePicker();
+    private final JDateField dateField = new JDateField();
+    private final JTimeField timeField = new JTimeField();
+    private final JDateTimeField dateTimeField = new JDateTimeField();
+    private final JDateRangeField dateRangeField = new JDateRangeField();
 
     private OptionGroup<DateSelectionMode> selectionMode;
     private JComboBox<PickerSize> dateSize;
@@ -445,7 +445,7 @@ public class DateTimeDemo extends JPanel {
     }
 
     private DateOption readDateOption() {
-        DateOption option = DatePicker.createOption()
+        DateOption option = JDatePicker.createOption()
                 .setSelectionMode(selectionMode.getValue())
                 .setSize((PickerSize) dateSize.getSelectedItem())
                 .setFirstDayOfWeek((DayOfWeek) firstDayOfWeek.getSelectedItem())
@@ -468,7 +468,7 @@ public class DateTimeDemo extends JPanel {
     }
 
     private TimeOption readTimeOption() {
-        TimeOption option = TimePicker.createOption()
+        TimeOption option = JTimePicker.createOption()
                 .setHour24(chHour24.isSelected())
                 .setSize((PickerSize) timeSize.getSelectedItem())
                 .setCloseOnSelect(chTimeCloseOnSelect.isSelected())
@@ -500,7 +500,7 @@ public class DateTimeDemo extends JPanel {
     }
 
     // the week of today, or its first day if the picker selects one date
-    private void selectWeek(DatePicker picker) {
+    private void selectWeek(JDatePicker picker) {
         DayOfWeek firstDay = picker.getOption().getFirstDayOfWeek();
         LocalDate today = LocalDate.now();
         LocalDate first = today.minusDays((today.getDayOfWeek().getValue() - firstDay.getValue() + 7) % 7);
