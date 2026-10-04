@@ -1,11 +1,13 @@
 package com.swingcraft4j.demo;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.fonts.roboto.FlatRobotoFont;
-import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import com.formdev.flatlaf.util.FontUtils;
+import com.swingcraft4j.modal.JModal;
+import com.swingcraft4j.modal.option.Location;
+import com.swingcraft4j.modal.option.ModalOption;
+import com.swingcraft4j.modal.simple.SimpleModal;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -36,17 +38,28 @@ public class Demo extends JFrame {
 
     private Component createThemeOption() {
         JPanel panel = new JPanel(new MigLayout("al trailing center"));
-        JCheckBox chDark = new JCheckBox("Dark mode");
-        chDark.addActionListener(e -> {
-            if (chDark.isSelected()) {
-                FlatMacDarkLaf.setup();
-            } else {
-                FlatMacLightLaf.setup();
-            }
-            FlatLaf.updateUI();
-        });
-        panel.add(chDark);
+        JButton button = new JButton("Themes", new ThemeIcon());
+        button.addActionListener(e -> showThemes());
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+        toolBar.add(button);
+        panel.add(toolBar);
         return panel;
+    }
+
+    // at the trailing side, over the whole height of the window. It slides in from the edge
+    private void showThemes() {
+        ModalOption option = JModal.createOption()
+                .setLocation(Location.TRAILING, Location.CENTER)
+                .setSize(-1, 1f)
+                .setMargin(0)
+                .setRound(0)
+                // a light background, so the theme is seen behind it
+                .setBackgroundOpacity(0.1f);
+        option.getAnimationOption()
+                .setFade(false)
+                .setOffset(300, 0);
+        JModal.show(this, new SimpleModal(new ThemesPanel(), "Themes"), option);
     }
 
     public static void main(String[] args) {

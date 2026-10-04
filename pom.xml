@@ -64,6 +64,11 @@
             </dependency>
             <dependency>
                 <groupId>com.formdev</groupId>
+                <artifactId>flatlaf-intellij-themes</artifactId>
+                <version>${flatlaf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.formdev</groupId>
                 <artifactId>flatlaf-fonts-roboto</artifactId>
                 <version>${flatlaf-fonts-roboto.version}</version>
             </dependency>

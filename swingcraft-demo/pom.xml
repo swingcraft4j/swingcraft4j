@@ -45,6 +45,11 @@
             <groupId>com.formdev</groupId>
             <artifactId>flatlaf-fonts-roboto</artifactId>
         </dependency>
+        <!-- the themes of the themes list, only the demo uses them -->
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf-intellij-themes</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.miglayout</groupId>
             <artifactId>miglayout-swing</artifactId>
