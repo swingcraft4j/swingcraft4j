@@ -803,10 +803,15 @@ public final class ToastPanel extends JPanel implements ToastController {
     /**
      * Paints the toast to images. The text of the real components does not look the same half visible,
      * and it can not be painted smaller without moving.
+     * <p>
+     * On a screen with a scale such as 125% the images are made again when the toast has moved to another
+     * part of a pixel: the text and the shadow are rounded from there, and the old images would show them
+     * one pixel off. They would jump when the animation is done and the real components are painted.
      */
     private void startSnapshot() {
-        if (snapshot != null && snapshot.hasSize(getContentArea().width, getContentArea().height)
-                && borderSnapshot != null && borderSnapshot.hasSize(getWidth(), getHeight())) {
+        Rectangle content = getContentArea();
+        if (snapshot != null && snapshot.isFor(this, content.x, content.y, content.width, content.height)
+                && borderSnapshot != null && borderSnapshot.isFor(this, 0, 0, getWidth(), getHeight())) {
             return;
         }
         endSnapshot();
