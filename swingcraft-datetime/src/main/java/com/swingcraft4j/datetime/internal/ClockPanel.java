@@ -223,16 +223,18 @@ final class ClockPanel extends JComponent {
             g2.setStroke(new BasicStroke(scale(HAND_WIDTH)));
             g2.draw(new Line2D.Float(centerX, centerY, knobX, knobY));
             g2.fill(knob);
-            g2.setColor(PickerUtils.accentForeground(accentColor));
-            if (!hourView && value % 5 != 0 && !animation.isRunning()) {
-                // a minute between two numbers has a dot. The number next to it is not painted on the knob:
-                // only a part of it would be seen
-                float dot = scale(4f);
-                g2.fill(new Ellipse2D.Float(knobX - dot / 2, knobY - dot / 2, dot, dot));
-                return;
-            }
+            // the part of a number that is under the knob is painted again on it, so the knob does not hide it:
+            // next to a number, as at the minute 29, the knob is over a part of the number
+            Shape clip = g2.getClip();
             g2.clip(knob);
             paintNumbers(g2, centerX, centerY, size, PickerUtils.accentForeground(accentColor));
+            g2.setClip(clip);
+            if (!hourView && value % 5 != 0 && !animation.isRunning()) {
+                // a minute between two numbers has a dot
+                float dot = scale(4f);
+                g2.setColor(PickerUtils.accentForeground(accentColor));
+                g2.fill(new Ellipse2D.Float(knobX - dot / 2, knobY - dot / 2, dot, dot));
+            }
         } finally {
             g2.dispose();
         }

@@ -10,7 +10,10 @@ import com.swingcraft4j.datetime.option.PickerSize;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
 import java.awt.geom.RoundRectangle2D;
@@ -167,11 +170,23 @@ final class PickerUtils {
 
     /**
      * Paints the text in the center of the bounds.
+     * <p>
+     * The text starts at a whole pixel of the screen. A text in the middle of two pixels is rounded to one
+     * of them by where the component is painted, and that is not the same place each time: a component that
+     * paints only itself again, as when the mouse moves over it, would show the text one pixel off.
      */
     static void paintText(Graphics2D g, String text, Rectangle2D bounds) {
         FontMetrics metrics = g.getFontMetrics();
-        float x = (float) (bounds.getCenterX() - metrics.stringWidth(text) / 2f);
-        float y = (float) (bounds.getCenterY() - metrics.getHeight() / 2f + metrics.getAscent());
-        g.drawString(text, x, y);
+        Point2D point = new Point2D.Double(bounds.getCenterX() - metrics.stringWidth(text) / 2f,
+                bounds.getCenterY() - metrics.getHeight() / 2f + metrics.getAscent());
+        AffineTransform transform = g.getTransform();
+        try {
+            transform.transform(point, point);
+            point.setLocation(Math.round(point.getX()), Math.round(point.getY()));
+            transform.inverseTransform(point, point);
+        } catch (NoninvertibleTransformException e) {
+            // painted where it is
+        }
+        g.drawString(text, (float) point.getX(), (float) point.getY());
     }
 }
