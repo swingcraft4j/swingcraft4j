@@ -192,8 +192,8 @@ panel.add(timePicker);
 | `setOption(TimeOption)`                 | Changes the option, the selected time stays                         |
 | `setEnabled(boolean)`                   | False shows the picker, but it can not be used                      |
 
-The listener gets a `TimeSelectionEvent` with `getTime()` for each hour and minute the hand is moved to, and
-when the selection is cleared. An hour that is selected first has the minute 0.
+The listener gets a `TimeSelectionEvent` with `getTime()` and `getTimePicker()` for each hour and minute the
+hand is moved to, and when the selection is cleared. An hour that is selected first has the minute 0.
 
 ## Time options
 
@@ -268,6 +268,9 @@ presets.add(new DatePreset("Next week", () -> {
 | `lastMonth()`         | The month before this one                     |
 | `thisYear()`          | From the first to the last day of this year   |
 | `lastYear()`          | The year before this one                      |
+
+A preset has `getName()` and `getRange()`, the range as it is now. `lastDays` throws
+`IllegalArgumentException` if the days are less than 1.
 
 The range is asked for each time, so "Today" is right on the next day too. A picker that selects one date
 selects the first date of the range. The names are in English: for another language, make the presets with
@@ -354,8 +357,9 @@ century: `26` is 2026.
 ### Value
 
 The field has a value when all its segments have one, they make a date that exists, and its
-[validator](#validation) has no error. While it is filled in part, the value is `null`. If every segment has a value but there is no such date, as the 31 of April, the
-value is `null` and the field has the error outline of the look and feel.
+[validator](#validation) has no error. While it is filled in part, the value is `null`. If every segment has
+a value but there is no such date, as the 31 of April, the value is `null` and the field has the error
+outline of the look and feel.
 
 | Method                         | What it does                                                             |
 |--------------------------------|--------------------------------------------------------------------------|
@@ -443,7 +447,8 @@ dateField.setValidator(date -> {
 | `null`                              | Normal | The value, nothing is shown           |
 
 The field shows an icon with the color of the result, the message is its tool tip. The colors are the ones
-of the look and feel.
+of the look and feel. A `ValidationResult` has `getSeverity()` (`ERROR`, `WARNING` or `SUCCESS`),
+`getMessage()` and `isError()`.
 
 The validator is called each time the field has another value. A field that is empty or filled in part is not
 checked by itself, so a form does not show errors before it is used. Call `validateInput()` to check the field
@@ -458,6 +463,7 @@ if (dateField.validateInput()) {
 | Method                  | What it does                                                                   |
 |-------------------------|--------------------------------------------------------------------------------|
 | `setValidator(validator)` | Sets the validator, null for none                                            |
+| `getValidator()`        | The validator, or null                                                         |
 | `validateInput()`       | Checks the field now, also if it is empty. True if the field can be used       |
 | `isInputValid()`        | True if the field is empty or has a value, and the validator has no error      |
 | `getValidationResult()` | What the validator said, or null                                               |
@@ -509,8 +515,9 @@ DateField dateField = new DateField(option);
 | `setDateOption(DateOption)`    |         | The option of the date picker in the popup                           |
 | `setTimeOption(TimeOption)`    |         | The option of the time picker in the popup                           |
 
-The two picker options close the popup on select by default. The date picker of a field always selects one
-date, and the clock has 12 or 24 hours as the pattern has.
+The two picker options close the popup on select by default. The field sets three things of them itself: the
+date picker selects one date, or a range in a `DateRangeField`, the clock has 12 or 24 hours as the pattern
+has, and the locale is the one of the field option.
 
 ### Pattern
 
