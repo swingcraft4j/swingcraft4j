@@ -229,8 +229,9 @@ final class ClockPanel extends JComponent {
             g2.clip(knob);
             paintNumbers(g2, centerX, centerY, size, PickerUtils.accentForeground(accentColor));
             g2.setClip(clip);
-            if (!hourView && value % 5 != 0 && !animation.isRunning()) {
-                // a minute between two numbers has a dot
+            if (!hourView && (value % 5 == 2 || value % 5 == 3) && !animation.isRunning()) {
+                // a minute between two numbers has a dot. Not the minute next to a number: the knob is over
+                // the number there, and the dot would be on it
                 float dot = scale(4f);
                 g2.setColor(PickerUtils.accentForeground(accentColor));
                 g2.fill(new Ellipse2D.Float(knobX - dot / 2, knobY - dot / 2, dot, dot));
