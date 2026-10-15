@@ -10,6 +10,7 @@ import com.swingcraft4j.datetime.option.PickerSize;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
@@ -171,14 +172,25 @@ final class PickerUtils {
     /**
      * Paints the text in the center of the bounds.
      * <p>
+     * From left to right a text of more than one character is centered by what is painted of it, not by its
+     * width: in a font where all digits are as wide as each other, a 1 has space at its sides, and 11 or 15
+     * would look too far right. One character is centered by its width: the font places it in its width so it
+     * looks centered, and a 1 by what is painted would have its line right of the center, moved by its flag.
+     * From top to bottom it is centered by the height of a capital letter, the same for every text, so the
+     * texts of one row stay on one line.
+     * <p>
      * The text starts at a whole pixel of the screen. A text in the middle of two pixels is rounded to one
      * of them by where the component is painted, and that is not the same place each time: a component that
      * paints only itself again, as when the mouse moves over it, would show the text one pixel off.
      */
     static void paintText(Graphics2D g, String text, Rectangle2D bounds) {
-        FontMetrics metrics = g.getFontMetrics();
-        Point2D point = new Point2D.Double(bounds.getCenterX() - metrics.stringWidth(text) / 2f,
-                bounds.getCenterY() - metrics.getHeight() / 2f + metrics.getAscent());
+        Font font = g.getFont();
+        FontRenderContext context = g.getFontRenderContext();
+        double center = text.length() == 1
+                ? g.getFontMetrics().stringWidth(text) / 2.0
+                : font.createGlyphVector(context, text).getVisualBounds().getCenterX();
+        Rectangle2D capital = font.createGlyphVector(context, "H").getVisualBounds();
+        Point2D point = new Point2D.Double(bounds.getCenterX() - center, bounds.getCenterY() - capital.getCenterY());
         AffineTransform transform = g.getTransform();
         try {
             transform.transform(point, point);
