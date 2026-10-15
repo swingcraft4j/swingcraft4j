@@ -13,6 +13,7 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 /**
  * Shows modals with the options selected in the form.
@@ -37,6 +38,9 @@ public class ModalDemo extends JPanel {
     private JSpinner margin;
     private JTextField width;
     private JTextField height;
+    private JComboBox<String> anchorSide;
+    private JComboBox<String> anchorAlign;
+    private JSpinner anchorGap;
 
     private JSpinner round;
     private JSpinner borderWidth;
@@ -130,7 +134,42 @@ public class ModalDemo extends JPanel {
         DemoUtils.addRow(panel, "Margin", margin);
         DemoUtils.addRow(panel, "Width", width);
         DemoUtils.addRow(panel, "Height", height);
+        anchorSide = new JComboBox<>(new String[]{"NONE", "TOP", "BOTTOM", "LEFT", "RIGHT", "LEADING", "TRAILING", "CENTER"});
+        anchorSide.setToolTipText("Shows the modal next to the link that is clicked, CENTER over it");
+        anchorAlign = new JComboBox<>();
+        anchorSide.addActionListener(e -> updateAnchorAlign());
+        updateAnchorAlign();
+        anchorGap = DemoUtils.createSpinner(4, 0, 100, 1);
+        DemoUtils.addRow(panel, "Anchor side", anchorSide);
+        DemoUtils.addRow(panel, "Anchor align", anchorAlign);
+        DemoUtils.addRow(panel, "Anchor gap", anchorGap);
         return panel;
+    }
+
+    // the align is along the side: from leading to trailing at the top and the bottom, from top to bottom at the other sides
+    private void updateAnchorAlign() {
+        Location side = getAnchorSide();
+        Object selected = anchorAlign.getSelectedItem();
+        anchorAlign.removeAllItems();
+        for (Location location : Location.values()) {
+            boolean valid = side == null || (side.isHorizontal() || location.isHorizontal()) && (side.isVertical() || location.isVertical());
+            if (valid) {
+                anchorAlign.addItem(location.name());
+            }
+        }
+        anchorAlign.setSelectedItem(selected != null ? selected : Location.CENTER.name());
+        if (anchorAlign.getSelectedIndex() < 0) {
+            anchorAlign.setSelectedItem(Location.CENTER.name());
+        }
+        anchorAlign.setEnabled(side != null);
+    }
+
+    /**
+     * @return the side of the anchor, null for no anchor
+     */
+    private Location getAnchorSide() {
+        String side = (String) anchorSide.getSelectedItem();
+        return "NONE".equals(side) ? null : Location.valueOf(side);
     }
 
     private Component createBorderOption() {
@@ -168,9 +207,9 @@ public class ModalDemo extends JPanel {
 
     private Component createSampleModal() {
         JPanel panel = DemoUtils.createGroup("Sample modal", "");
-        panel.add(DemoUtils.createLink("Show modal", this::showModal));
-        panel.add(DemoUtils.createLink("Show slide modal", this::showSlideModal));
-        panel.add(DemoUtils.createLink("Show color modal", this::showColorModal));
+        panel.add(createLink("Show modal", this::showModal));
+        panel.add(createLink("Show slide modal", this::showSlideModal));
+        panel.add(createLink("Show color modal", this::showColorModal));
         panel.add(DemoUtils.createLink("Show test frame", () -> new ModalTestFrame(this, this::createOption).setVisible(true)));
         panel.add(DemoUtils.createLink("Close all", JModal::closeAll));
         return panel;
@@ -178,15 +217,15 @@ public class ModalDemo extends JPanel {
 
     private Component createMessageModal() {
         JPanel panel = DemoUtils.createGroup("Custom message modal", "");
-        panel.add(DemoUtils.createLink("Show default", () -> showMessage(MessageIcon.Type.DEFAULT,
+        panel.add(createLink("Show default", link -> showMessage(link, MessageIcon.Type.DEFAULT,
                 "This is a message modal. It is a simple modal with an icon and a text as the content.")));
-        panel.add(DemoUtils.createLink("Show success", () -> showMessage(MessageIcon.Type.SUCCESS,
+        panel.add(createLink("Show success", link -> showMessage(link, MessageIcon.Type.SUCCESS,
                 "Your changes have been saved. They are visible to everyone from now on.")));
-        panel.add(DemoUtils.createLink("Show info", () -> showMessage(MessageIcon.Type.INFO,
+        panel.add(createLink("Show info", link -> showMessage(link, MessageIcon.Type.INFO,
                 "A new version is available. It is installed the next time the application starts.")));
-        panel.add(DemoUtils.createLink("Show warning", () -> showMessage(MessageIcon.Type.WARNING,
+        panel.add(createLink("Show warning", link -> showMessage(link, MessageIcon.Type.WARNING,
                 "The file has been changed by another application. Do you want to load it again?")));
-        panel.add(DemoUtils.createLink("Show error", () -> showMessage(MessageIcon.Type.ERROR,
+        panel.add(createLink("Show error", link -> showMessage(link, MessageIcon.Type.ERROR,
                 "The connection to the server has been lost. Check the network and try again.")));
         return panel;
     }
@@ -202,6 +241,8 @@ public class ModalDemo extends JPanel {
                 .setBackgroundColor(backgroundColor.getColor())
                 .setCloseOnEscape(chCloseOnEscape.isSelected())
                 .setRelativeToOwner(chRelativeToOwner.isSelected())
+                .setAnchor(getAnchorSide(), Location.valueOf((String) anchorAlign.getSelectedItem()))
+                .setAnchorGap(DemoUtils.intValue(anchorGap))
                 .setMovable(chMovable.isSelected())
                 .setSurface((Surface) surface.getSelectedItem())
                 .setMargin(DemoUtils.intValue(margin))
@@ -237,7 +278,7 @@ public class ModalDemo extends JPanel {
         }
     }
 
-    private void showModal() {
+    private void showModal(Component link) {
         JPanel content = createContent("wrap,fillx,width 320", "[fill]");
         JTextField textName = new JTextField();
         JComboBox<String> comboCategory = new JComboBox<>(new String[]{"General", "Design", "Development", "Marketing", "Support"});
@@ -258,15 +299,15 @@ public class ModalDemo extends JPanel {
                 textName.requestFocusInWindow();
             }
         });
-        JModal.show(this, modal, createOption());
+        JModal.show(getOwner(link), modal, createOption());
     }
 
-    private void showSlideModal() {
+    private void showSlideModal(Component link) {
         JPanel content = createContent("wrap", "");
         SimpleModal modal = new SimpleModal(content, "Slide modal", SimpleModal.OptionType.CLOSE, null);
         content.add(createText("This modal can show another modal in place of itself. The next modal slides in and has a back button to come back to this one."));
         content.add(DemoUtils.createLink("Show next modal", () -> modal.pushModal(createNextModal(2))));
-        JModal.show(this, modal, createOption());
+        JModal.show(getOwner(link), modal, createOption());
     }
 
     private SimpleModal createNextModal(int index) {
@@ -277,24 +318,36 @@ public class ModalDemo extends JPanel {
         return modal;
     }
 
-    private void showColorModal() {
+    private void showColorModal(Component link) {
         JPanel content = createContent("wrap", "");
         content.add(createText("The background color is set on the modal. The round border is filled with it, and it is seen behind the content that is not opaque."));
         SimpleModal modal = new SimpleModal(content, "Color modal", SimpleModal.OptionType.OK_CANCEL, null);
         // a light or a dark color of the accent color, so the text of the look and feel can be read on it
         Color accent = UIManager.getColor("Component.accentColor");
         modal.setBackground(FlatLaf.isLafDark() ? ColorFunctions.shade(accent, 0.7f) : ColorFunctions.tint(accent, 0.85f));
-        JModal.show(this, modal, createOption());
+        JModal.show(getOwner(link), modal, createOption());
     }
 
-    private void showMessage(MessageIcon.Type type, String message) {
+    private void showMessage(Component link, MessageIcon.Type type, String message) {
         JPanel content = createContent("", "");
         content.add(new JLabel(new MessageIcon(type)), "top");
         content.add(createText(message));
         SimpleModal.OptionType optionType = type == MessageIcon.Type.WARNING
                 ? SimpleModal.OptionType.YES_NO_CANCEL
                 : SimpleModal.OptionType.OK_CANCEL;
-        JModal.show(this, new SimpleModal(content, type.getTitle(), optionType, null), createOption());
+        JModal.show(getOwner(link), new SimpleModal(content, type.getTitle(), optionType, null), createOption());
+    }
+
+    // a link that gives itself to its action, as the owner of a modal with an anchor
+    private JButton createLink(String text, Consumer<Component> action) {
+        JButton[] link = new JButton[1];
+        link[0] = DemoUtils.createLink(text, () -> action.accept(link[0]));
+        return link[0];
+    }
+
+    // a modal with an anchor is next to the link, the others are relative to this panel
+    private Component getOwner(Component link) {
+        return getAnchorSide() != null ? link : this;
     }
 
     // the background of the modal is painted behind the content

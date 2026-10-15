@@ -52,7 +52,7 @@ public class ModalTestFrame extends JFrame {
         JPanel panel = new JPanel(new MigLayout("wrap,fill", "[center]", "[" + position + "]"));
         JPanel buttons = new JPanel(new MigLayout("wrap", "[center]"));
         buttons.add(new JLabel(name + " part"));
-        buttons.add(DemoUtils.createLink("Show modal over the part", () -> showModal(panel, name.toLowerCase() + " part", option.get().setRelativeToOwner(true))));
+        buttons.add(DemoUtils.createLink("Show modal over the part", () -> showModal(panel, name.toLowerCase() + " part", option.get().setRelativeToOwner(true).setAnchor(null, null))));
         JPanel sides = new JPanel(new MigLayout());
         addAnchorButton(sides, "Top", Location.TOP);
         addAnchorButton(sides, "Bottom", Location.BOTTOM);
