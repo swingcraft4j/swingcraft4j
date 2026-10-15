@@ -11,6 +11,7 @@ import com.swingcraft4j.datetime.option.PickerSize;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
@@ -179,6 +180,11 @@ final class PickerUtils {
      * From top to bottom it is centered by the height of a capital letter, the same for every text, so the
      * texts of one row stay on one line.
      * <p>
+     * What is painted of a text is not known exactly. Its outline does not know that the font moves the edges of
+     * a letter to the pixels, more in a font as Segoe UI. The pixels it paints count a pixel at its edge that is
+     * hardly painted as much as the others. The middle of the two is closer than each of them, in every font
+     * that was tried. The height of a capital letter is taken from its pixels.
+     * <p>
      * The text starts at a whole pixel of the screen. A text in the middle of two pixels is rounded to one
      * of them by where the component is painted, and that is not the same place each time: a component that
      * paints only itself again, as when the mouse moves over it, would show the text one pixel off.
@@ -186,19 +192,28 @@ final class PickerUtils {
     static void paintText(Graphics2D g, String text, Rectangle2D bounds) {
         Font font = g.getFont();
         FontRenderContext context = g.getFontRenderContext();
-        double center = text.length() == 1
-                ? g.getFontMetrics().stringWidth(text) / 2.0
-                : font.createGlyphVector(context, text).getVisualBounds().getCenterX();
-        Rectangle2D capital = font.createGlyphVector(context, "H").getVisualBounds();
-        Point2D point = new Point2D.Double(bounds.getCenterX() - center, bounds.getCenterY() - capital.getCenterY());
         AffineTransform transform = g.getTransform();
+        Point2D center = transform.transform(new Point2D.Double(bounds.getCenterX(), bounds.getCenterY()), null);
+        // where the text is from its start, in pixels of the screen. The pixels are of a start at a whole pixel,
+        // they are the same from every whole pixel. The space of the font is the one of the screen, without the
+        // place of the graphics
+        GlyphVector glyphs = font.createGlyphVector(context, text);
+        double scale = transform.getScaleX();
+        Rectangle capital = font.createGlyphVector(context, "H").getPixelBounds(context, 0, 0);
+        double textCenter = text.length() == 1
+                ? glyphs.getLogicalBounds().getWidth() * scale / 2
+                : (glyphs.getVisualBounds().getCenterX() * scale + glyphs.getPixelBounds(context, 0, 0).getCenterX()) / 2;
+        Point2D start = new Point2D.Double(Math.round(center.getX() - textCenter), Math.round(center.getY() - capital.getCenterY()));
+        Point2D origin = toUser(transform, start);
+        g.drawString(text, (float) origin.getX(), (float) origin.getY());
+    }
+
+    // the point of the screen in the space of the graphics
+    private static Point2D toUser(AffineTransform transform, Point2D point) {
         try {
-            transform.transform(point, point);
-            point.setLocation(Math.round(point.getX()), Math.round(point.getY()));
-            transform.inverseTransform(point, point);
+            return transform.inverseTransform(point, null);
         } catch (NoninvertibleTransformException e) {
-            // painted where it is
+            return new Point2D.Double(point.getX(), point.getY());
         }
-        g.drawString(text, (float) point.getX(), (float) point.getY());
     }
 }
