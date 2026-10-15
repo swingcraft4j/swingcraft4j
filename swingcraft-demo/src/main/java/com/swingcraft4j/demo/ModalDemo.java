@@ -67,6 +67,7 @@ public class ModalDemo extends JPanel {
         add(createAnimationOption(), "growy");
         add(createSampleModal(), "span 5");
         add(createMessageModal(), "span 5");
+        add(createTestFrames(), "span 5");
     }
 
     private Component createHorizontalOption() {
@@ -210,8 +211,14 @@ public class ModalDemo extends JPanel {
         panel.add(createLink("Show modal", this::showModal));
         panel.add(createLink("Show slide modal", this::showSlideModal));
         panel.add(createLink("Show color modal", this::showColorModal));
-        panel.add(DemoUtils.createLink("Show test frame", () -> new ModalTestFrame(this, this::createOption).setVisible(true)));
         panel.add(DemoUtils.createLink("Close all", JModal::closeAll));
+        return panel;
+    }
+
+    private Component createTestFrames() {
+        JPanel panel = DemoUtils.createGroup("Test frames", "");
+        panel.add(DemoUtils.createLink("Show split pane frame", () -> new ModalTestFrame(this, this::createOption).setVisible(true)));
+        panel.add(DemoUtils.createLink("Show internal frame", () -> new ModalInternalTestFrame(this, this::createOption).setVisible(true)));
         return panel;
     }
 
