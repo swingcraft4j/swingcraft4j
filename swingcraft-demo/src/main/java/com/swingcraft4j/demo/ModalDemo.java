@@ -87,7 +87,7 @@ public class ModalDemo extends JPanel {
 
     private Component createOptions() {
         JPanel panel = DemoUtils.createGroup("Options", "wrap");
-        chAnimation = new JCheckBox("Animation enable", true);
+        chAnimation = new JCheckBox("Animation enable", false);
         chFade = new JCheckBox("Animate fade", true);
         chSnapshot = new JCheckBox("Animate snapshot");
         chCloseOnEscape = new JCheckBox("Close on pressed escape", true);

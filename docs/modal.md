@@ -330,10 +330,12 @@ owner is removed from the window.
 
 ## Animation
 
-`AnimationOption` sets how a modal is shown, closed, pushed and popped. Get it from the option.
+`AnimationOption` sets how a modal is shown, closed, pushed and popped. Get it from the option. The
+animation is off by default, turn it on with `setEnabled(true)`.
 
 ```java
 option.getAnimationOption()
+        .setEnabled(true)
         .setDuration(300)
         .setOffset(0, -30)
         .setScale(0.1f);
@@ -341,7 +343,7 @@ option.getAnimationOption()
 
 | Setter                   | Default | What it does                                                                |
 |--------------------------|---------|-----------------------------------------------------------------------------|
-| `setEnabled(boolean)`    | `true`  | False for no animation at all                                               |
+| `setEnabled(boolean)`    | `false` | True to animate the modal, false for no animation at all                    |
 | `setDuration(int)`       | `200`   | The time in milliseconds to show or close the modal, 0 for no animation     |
 | `setSlideDuration(int)`  | `300`   | The time in milliseconds to slide to the pushed or popped modal             |
 | `setOffset(x, y)`        | `0, 20` | Where the modal starts, from its location. It moves from there to its place |

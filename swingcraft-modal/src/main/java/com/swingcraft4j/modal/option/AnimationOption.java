@@ -8,7 +8,7 @@ import java.awt.*;
  */
 public class AnimationOption {
 
-    private boolean enabled = true;
+    private boolean enabled;
     private int duration = 200;
     private int slideDuration = 300;
     private Point offset = new Point(0, 20);
@@ -45,8 +45,8 @@ public class AnimationOption {
     }
 
     /**
-     * @param enabled false to show, close, push and pop the modal without animation.
-     *                The animation is also off when the system property
+     * @param enabled true to animate when the modal is shown, closed, pushed and popped. The default is
+     *                false. The animation is also off when the system property
      *                {@code flatlaf.animation} is {@code false}
      */
     public AnimationOption setEnabled(boolean enabled) {
