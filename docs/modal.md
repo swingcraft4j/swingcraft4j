@@ -280,6 +280,8 @@ JModal.show(owner, modal, option);
 | `setMargin(top, left, bottom, right)`|                   | The same, for each side                                       |
 | `setSize(width, height)`            | `-1`, `-1`         | The size of the modal, see below                              |
 | `setRelativeToOwner(boolean)`       | `false`            | Shows the modal over the owner component, not the whole window|
+| `setAnchor(side, align)`            | `null`             | Places the modal next to the owner component, see below       |
+| `setAnchorGap(int)`                 | `4`                | The space between the owner and the modal next to it          |
 | `setMovable(boolean)`               | `false`            | The user can drag the modal with the mouse                    |
 
 **Location.** The horizontal location is `LEADING`, `LEFT`, `CENTER`, `RIGHT` or `TRAILING`. The vertical
@@ -312,6 +314,25 @@ system can not show a transparent window, the modal is shown in a `LAYER`.
 **Relative to owner.** The background, the location, the size and the margin then apply to the visible area
 of the owner. The modal follows the owner when it moves, hides while the owner is hidden, and closes when the
 owner is removed from the window.
+
+**Anchor.** The modal is placed next to the owner component, as a popover next to a button. The side is
+`TOP`, `BOTTOM`, `LEFT`, `RIGHT`, `LEADING` or `TRAILING`, or `CENTER` to place the modal over the owner, where
+it can be larger than the owner. The align lines the modal up with the owner along the side: `LEADING`,
+`LEFT`, `CENTER`, `RIGHT` or `TRAILING` for `TOP` and `BOTTOM`, and `TOP`, `CENTER` or `BOTTOM` for the other
+sides.
+
+```java
+option.setAnchor(Location.BOTTOM, Location.LEADING);   // below the button, the leading edges lined up
+option.setAnchor(Location.TRAILING, Location.CENTER);  // at the trailing side of the button, centered
+option.setAnchor(Location.CENTER, Location.CENTER);    // over the owner, centered on it
+JModal.show(button, modal, option);
+```
+
+The background still covers the whole window, and the size and the margin apply to the window. The location
+and relative to owner are not used. When there is no room at the side, the modal goes to the other side, and
+it is moved along the owner to stay inside the window, or inside the screen with `Surface.WINDOW`. The
+animation offset turns with the side: its y is the distance towards the owner, so the modal comes out of it.
+As relative to owner, the modal follows the owner, hides with it and closes when it is removed.
 
 **Movable.** The modal can be dragged by any part that does not use the mouse itself, such as the title.
 

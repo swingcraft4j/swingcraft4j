@@ -1,16 +1,19 @@
 package com.swingcraft4j.modal.internal;
 
 import com.formdev.flatlaf.util.UIScale;
+import com.swingcraft4j.modal.option.Location;
 import com.swingcraft4j.modal.option.ModalOption;
 
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * Lays out the modal panel inside its container with the layout options.
  * Size and location apply to the visible part of the panel, the shadow is placed around it.
  * <p>
  * The panel is placed in an area of the container. In a layer the area is the whole container. In a window
- * of its own the container is larger than the area when the modal does not fit in it.
+ * of its own the container is larger than the area when the modal does not fit in it. A modal with an anchor
+ * is placed next to its owner instead of at its location in the area.
  */
 final class ModalLayout implements LayoutManager {
 
@@ -18,6 +21,8 @@ final class ModalLayout implements LayoutManager {
     private final ModalOption option;
     // true if the modal can be larger than the area
     private final boolean overflow;
+    // where the owner is in the area, for a modal placed next to it. Null if it is not
+    private final Supplier<Rectangle> anchor;
     // how far the user has dragged the modal away from its location
     private final Point offset = new Point();
     // 0 when the modal starts to show, 1 when it is at its location
@@ -27,10 +32,11 @@ final class ModalLayout implements LayoutManager {
     // the part of the screen a modal that leaves its area stays in, relative to the area. Null if not known
     private Rectangle screen;
 
-    ModalLayout(ModalPanel panel, ModalOption option, boolean overflow) {
+    ModalLayout(ModalPanel panel, ModalOption option, boolean overflow, Supplier<Rectangle> anchor) {
         this.panel = panel;
         this.option = option;
         this.overflow = overflow;
+        this.anchor = anchor;
     }
 
     Point getOffset() {
@@ -141,8 +147,24 @@ final class ModalLayout implements LayoutManager {
         int width = getSize(option.getWidth(), preferred.width - shadowWidth, minimum.width - shadowWidth, availableWidth, maximumWidth);
         int height = getSize(option.getHeight(), preferred.height - shadowHeight, minimum.height - shadowHeight, availableHeight, maximumHeight);
 
-        int x = margin.left + Math.round((availableWidth - width) * option.getHorizontalLocation().getValue(ltr));
-        int y = margin.top + Math.round((availableHeight - height) * option.getVerticalLocation().getValue(true));
+        int x;
+        int y;
+        // the side of the owner the modal is at: -1 before it, 1 after it, 0 for no side
+        Point direction = new Point();
+        if (anchor != null) {
+            // inside the area, or the screen when the modal can leave the area
+            Rectangle limit = new Rectangle(margin.left, margin.top, availableWidth, availableHeight);
+            if (overflow && screen != null) {
+                limit = new Rectangle(screen.x + margin.left, screen.y + margin.top,
+                        screen.width - (margin.left + margin.right), screen.height - (margin.top + margin.bottom));
+            }
+            Point location = getAnchorLocation(anchor.get(), width, height, limit, ltr, direction);
+            x = location.x;
+            y = location.y;
+        } else {
+            x = margin.left + Math.round((availableWidth - width) * option.getHorizontalLocation().getValue(ltr));
+            y = margin.top + Math.round((availableHeight - height) * option.getVerticalLocation().getValue(true));
+        }
         if (offset.x != 0 || offset.y != 0) {
             // keep the dragged modal inside, and forget the part of the drag that went outside
             int movedX = keepInside(x + offset.x, areaWidth - width);
@@ -162,12 +184,70 @@ final class ModalLayout implements LayoutManager {
         }
         if (animationProgress < 1) {
             // whole pixels, so the text of the moving modal stays sharp
-            Point animationOffset = option.getAnimationOption().getOffset();
+            Point animationOffset = getAnimationOffset(direction, ltr);
             float distance = 1f - animationProgress;
-            x += Math.round(UIScale.scale(animationOffset.x) * distance) * (ltr ? 1 : -1);
+            x += Math.round(UIScale.scale(animationOffset.x) * distance);
             y += Math.round(UIScale.scale(animationOffset.y) * distance);
         }
         return new Rectangle(x - shadow.left, y - shadow.top, width + shadowWidth, height + shadowHeight);
+    }
+
+    /**
+     * @param direction set to the side of the owner the modal is placed at, after it went to the other side
+     * @return the location of the modal next to the owner, moved along the owner to stay inside the limit
+     */
+    private Point getAnchorLocation(Rectangle owner, int width, int height, Rectangle limit, boolean ltr, Point direction) {
+        Location side = option.getAnchorSide();
+        Location align = option.getAnchorAlign();
+        int gap = UIScale.scale(option.getAnchorGap());
+        int x;
+        int y;
+        if (side == Location.CENTER) {
+            x = owner.x + Math.round((owner.width - width) * (align.isHorizontal() ? align.getValue(ltr) : 0.5f));
+            y = owner.y + Math.round((owner.height - height) * (align.isVertical() ? align.getValue(ltr) : 0.5f));
+        } else if (side.isVertical()) {
+            int dir = getSideDirection(side == Location.TOP ? -1 : 1, owner.y, owner.height, height + gap, limit.y, limit.height);
+            x = owner.x + Math.round((owner.width - width) * align.getValue(ltr));
+            y = dir < 0 ? owner.y - gap - height : owner.y + owner.height + gap;
+            direction.setLocation(0, dir);
+        } else {
+            int dir = getSideDirection(side.getValue(ltr) < 0.5f ? -1 : 1, owner.x, owner.width, width + gap, limit.x, limit.width);
+            x = dir < 0 ? owner.x - gap - width : owner.x + owner.width + gap;
+            y = owner.y + Math.round((owner.height - height) * align.getValue(ltr));
+            direction.setLocation(dir, 0);
+        }
+        x = Math.max(Math.min(x, limit.x + limit.width - width), limit.x);
+        y = Math.max(Math.min(y, limit.y + limit.height - height), limit.y);
+        return new Point(x, y);
+    }
+
+    /**
+     * @param direction -1 for the side before the owner, 1 for the side after it
+     * @param size      the room the modal needs at the side, with the gap
+     * @return the other side when the modal does not fit at the side and there is more room at the other side
+     */
+    private static int getSideDirection(int direction, int ownerStart, int ownerSize, int size, int limitStart, int limitSize) {
+        int before = ownerStart - limitStart;
+        int after = limitStart + limitSize - (ownerStart + ownerSize);
+        int room = direction < 0 ? before : after;
+        int otherRoom = direction < 0 ? after : before;
+        return room < size && otherRoom > room ? -direction : direction;
+    }
+
+    /**
+     * @param direction the side of the owner the modal is at, 0 if it is not next to the owner
+     * @return the unscaled offset the modal starts to show at. Next to the owner, the y of the option is turned to
+     * point to the owner: the modal comes out of the owner
+     */
+    private Point getAnimationOffset(Point direction, boolean ltr) {
+        Point offset = option.getAnimationOption().getOffset();
+        if (direction.y != 0) {
+            return new Point(ltr ? offset.x : -offset.x, -direction.y * offset.y);
+        }
+        if (direction.x != 0) {
+            return new Point(-direction.x * offset.y, offset.x);
+        }
+        return new Point(ltr ? offset.x : -offset.x, offset.y);
     }
 
     /**

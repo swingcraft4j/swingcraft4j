@@ -62,7 +62,8 @@ public final class ModalContainer extends JComponent implements ModalController 
     private HierarchyListener ownerHierarchyListener;
 
     /**
-     * @param owner the component the modal is relative to, or null for the whole window
+     * @param owner the component the modal is relative to, or null for the whole window. With an anchor the
+     *              modal is placed next to it
      */
     ModalContainer(ModalRoot root, ModalHost host, Component owner, Modal modal, ModalOption option, String id) {
         this.root = root;
@@ -71,7 +72,7 @@ public final class ModalContainer extends JComponent implements ModalController 
         this.option = option;
         this.id = id;
         panel = new ModalPanel(option, host.isWindow());
-        layout = new ModalLayout(panel, option, host.isWindow());
+        layout = new ModalLayout(panel, option, host.isWindow(), isAnchored() ? this::getAnchor : null);
         setLayout(layout);
         add(panel);
         modals.push(modal);
@@ -158,23 +159,23 @@ public final class ModalContainer extends JComponent implements ModalController 
         ownerBoundsListener = new ComponentAdapter() {
             @Override
             public void componentMoved(ComponentEvent e) {
-                root.getLayer().revalidate();
+                ownerMoved();
             }
 
             @Override
             public void componentResized(ComponentEvent e) {
-                root.getLayer().revalidate();
+                ownerMoved();
             }
         };
         ownerAncestorBoundsListener = new HierarchyBoundsAdapter() {
             @Override
             public void ancestorMoved(HierarchyEvent e) {
-                root.getLayer().revalidate();
+                ownerMoved();
             }
 
             @Override
             public void ancestorResized(HierarchyEvent e) {
-                root.getLayer().revalidate();
+                ownerMoved();
             }
         };
         ownerHierarchyListener = e -> {
@@ -198,6 +199,12 @@ public final class ModalContainer extends JComponent implements ModalController 
         owner.addHierarchyBoundsListener(ownerAncestorBoundsListener);
         owner.addHierarchyListener(ownerHierarchyListener);
         setVisible(owner.isShowing());
+    }
+
+    private void ownerMoved() {
+        // an anchored modal moves inside an area that stays the same, so its layout is not done by itself
+        invalidate();
+        root.getLayer().revalidate();
     }
 
     /**
@@ -234,22 +241,37 @@ public final class ModalContainer extends JComponent implements ModalController 
     }
 
     /**
+     * @return true if the modal is placed next to its owner, and covers the whole window
+     */
+    private boolean isAnchored() {
+        return owner != null && option.getAnchorSide() != null;
+    }
+
+    /**
      * @return the area this modal covers, in the layer of the window: the visible part of the owner, or the
      * whole layer. In a window of its own the modal covers the same area, the window is placed over it
      */
     Rectangle getArea() {
         ModalLayer layer = root.getLayer();
         Rectangle layerArea = new Rectangle(0, 0, layer.getWidth(), layer.getHeight());
-        if (owner == null) {
+        if (owner == null || isAnchored()) {
             return layerArea;
         }
-        Rectangle ownerArea = owner instanceof JComponent
-                ? ((JComponent) owner).getVisibleRect()
-                : new Rectangle(0, 0, owner.getWidth(), owner.getHeight());
-        Rectangle area = SwingUtilities.convertRectangle(owner, ownerArea, layer).intersection(layerArea);
+        Rectangle area = getAnchor().intersection(layerArea);
         area.width = Math.max(area.width, 0);
         area.height = Math.max(area.height, 0);
         return area;
+    }
+
+    /**
+     * @return the visible part of the owner, in the layer of the window. An anchored modal covers the whole
+     * layer, so this is also where the owner is in its area
+     */
+    private Rectangle getAnchor() {
+        Rectangle ownerArea = owner instanceof JComponent
+                ? ((JComponent) owner).getVisibleRect()
+                : new Rectangle(0, 0, owner.getWidth(), owner.getHeight());
+        return SwingUtilities.convertRectangle(owner, ownerArea, root.getLayer());
     }
 
     /**

@@ -40,8 +40,9 @@ public final class ModalManager {
         }
         ModalOption copy = option.copy();
         RootPaneContainer window = getWindow(owner);
-        // relative to the window is the same as not relative
-        Component relativeOwner = copy.isRelativeToOwner() && owner != window ? owner : null;
+        // relative to the window, or next to it, is the same as not relative
+        boolean relative = copy.isRelativeToOwner() || copy.getAnchorSide() != null;
+        Component relativeOwner = relative && owner != window ? owner : null;
         while (window instanceof ModalWindow) {
             // the owner is in a modal that has a window of its own. That window is not the window of the user,
             // and a layer of the window of the user is behind it

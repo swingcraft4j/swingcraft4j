@@ -26,6 +26,9 @@ public class ModalOption {
     private Number width = -1;
     private Number height = -1;
     private boolean relativeToOwner;
+    private Location anchorSide;
+    private Location anchorAlign = Location.CENTER;
+    private int anchorGap = 4;
     private boolean movable;
 
     private AnimationOption animationOption = new AnimationOption();
@@ -80,6 +83,18 @@ public class ModalOption {
 
     public boolean isRelativeToOwner() {
         return relativeToOwner;
+    }
+
+    public Location getAnchorSide() {
+        return anchorSide;
+    }
+
+    public Location getAnchorAlign() {
+        return anchorAlign;
+    }
+
+    public int getAnchorGap() {
+        return anchorGap;
     }
 
     public boolean isMovable() {
@@ -219,6 +234,48 @@ public class ModalOption {
     }
 
     /**
+     * Places the modal next to the owner component, as a popover next to a button. The background still covers
+     * the whole window, and the size and the margin apply to the window. The location and
+     * {@link #setRelativeToOwner(boolean)} are not used then. When there is no room at the side, the modal goes
+     * to the other side, and it is moved along the owner to stay inside the window. With {@link Surface#WINDOW}
+     * it stays inside the screen instead. The modal follows the owner when it moves, hides while the owner is
+     * hidden and closes when the owner is removed from the window
+     *
+     * @param side  the side of the owner: TOP, BOTTOM, LEFT, RIGHT, LEADING or TRAILING. CENTER to place the
+     *              modal over the owner, where it can be larger than the owner. Null for no anchor (default)
+     * @param align how the modal lines up with the owner along the side. For TOP and BOTTOM: LEADING, LEFT,
+     *              CENTER, RIGHT or TRAILING. For the other sides: TOP, CENTER or BOTTOM. For CENTER: any,
+     *              LEADING lines up the leading edges and the modal is centered on the owner from top to bottom
+     */
+    public ModalOption setAnchor(Location side, Location align) {
+        if (side != null) {
+            if (align == null) {
+                throw new IllegalArgumentException("anchor align must not null");
+            }
+            if (!side.isHorizontal() && !align.isHorizontal()) {
+                throw new IllegalArgumentException("anchor align at side " + side + " must be LEADING, LEFT, CENTER, RIGHT or TRAILING: " + align);
+            }
+            if (!side.isVertical() && !align.isVertical()) {
+                throw new IllegalArgumentException("anchor align at side " + side + " must be TOP, CENTER or BOTTOM: " + align);
+            }
+        }
+        this.anchorSide = side;
+        this.anchorAlign = align != null ? align : Location.CENTER;
+        return this;
+    }
+
+    /**
+     * @param anchorGap the space between the owner and the modal placed next to it by {@link #setAnchor}
+     */
+    public ModalOption setAnchorGap(int anchorGap) {
+        if (anchorGap < 0) {
+            throw new IllegalArgumentException("anchor gap must be >= 0");
+        }
+        this.anchorGap = anchorGap;
+        return this;
+    }
+
+    /**
      * @param movable true to let the user drag the modal with the mouse. The modal can be dragged
      *                by any part that does not use the mouse itself, such as the title
      */
@@ -316,6 +373,9 @@ public class ModalOption {
         option.width = width;
         option.height = height;
         option.relativeToOwner = relativeToOwner;
+        option.anchorSide = anchorSide;
+        option.anchorAlign = anchorAlign;
+        option.anchorGap = anchorGap;
         option.movable = movable;
         option.animationOption = animationOption.copy();
         option.round = round;
