@@ -171,6 +171,7 @@ public class ModalDemo extends JPanel {
         panel.add(DemoUtils.createLink("Show modal", this::showModal));
         panel.add(DemoUtils.createLink("Show slide modal", this::showSlideModal));
         panel.add(DemoUtils.createLink("Show color modal", this::showColorModal));
+        panel.add(DemoUtils.createLink("Show test frame", () -> new ModalTestFrame(this, this::createOption).setVisible(true)));
         panel.add(DemoUtils.createLink("Close all", JModal::closeAll));
         return panel;
     }
