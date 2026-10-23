@@ -22,33 +22,26 @@ public class ModalBorder extends AbstractBorder {
     private static final float LIGHT_SHADOW_OPACITY = 0.22f;
     private static final float DARK_SHADOW_OPACITY = 0.5f;
 
-    private final Insets shadowSize;
-    private final Color shadowColor;
-    private final float shadowOpacity;
-    private final int round;
-    private final int borderWidth;
-    private final Color borderColor;
+    // read when the border is painted: a theme updater can change it while the modal is open
+    private final ModalOption option;
     private final ShadowRenderer shadowRenderer = new ShadowRenderer();
 
     public ModalBorder(ModalOption option) {
-        this.shadowSize = option.getShadowSize();
-        this.shadowColor = option.getShadowColor();
-        this.shadowOpacity = option.getShadowOpacity();
-        this.round = option.getRound();
-        this.borderWidth = option.getBorderWidth();
-        this.borderColor = option.getBorderColor();
+        this.option = option;
     }
 
     /**
      * @return the scaled space the shadow takes on each side. The modal is only visible inside it
      */
     public Insets getShadowInsets() {
-        return UIScale.scale(shadowSize);
+        return UIScale.scale(option.getShadowSize());
     }
 
     @Override
     public Insets getBorderInsets(Component c, Insets insets) {
         Insets shadow = getShadowInsets();
+        int round = option.getRound();
+        int borderWidth = option.getBorderWidth();
         float innerArc = Math.max(round - borderWidth * 2f, 0);
         int padding = UIScale.scale((int) Math.ceil(borderWidth + innerArc * ROUND_PADDING));
         insets.top = shadow.top + padding;
@@ -83,7 +76,7 @@ public class ModalBorder extends AbstractBorder {
         if (bw <= 0 || bh <= 0) {
             return;
         }
-        float arc = Math.min((float) (UIScale.scale((float) round) * scaleFactor), Math.min(bw, bh));
+        float arc = Math.min((float) (UIScale.scale((float) option.getRound()) * scaleFactor), Math.min(bw, bh));
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
@@ -103,7 +96,7 @@ public class ModalBorder extends AbstractBorder {
         g.fill(new RoundRectangle2D.Float(bx, by, bw, bh, arc, arc));
 
         // paint outline
-        float lineWidth = (float) (UIScale.scale((float) borderWidth) * scaleFactor);
+        float lineWidth = (float) (UIScale.scale((float) option.getBorderWidth()) * scaleFactor);
         if (lineWidth > 0) {
             float innerArc = Math.max(arc - lineWidth * 2, 0);
             Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
@@ -115,6 +108,7 @@ public class ModalBorder extends AbstractBorder {
     }
 
     private Color getShadowColor() {
+        Color shadowColor = option.getShadowColor();
         if (shadowColor != null) {
             return shadowColor;
         }
@@ -123,6 +117,7 @@ public class ModalBorder extends AbstractBorder {
     }
 
     private float getShadowOpacity() {
+        float shadowOpacity = option.getShadowOpacity();
         if (shadowOpacity >= 0) {
             return Math.min(shadowOpacity, 1f);
         }
@@ -132,6 +127,7 @@ public class ModalBorder extends AbstractBorder {
     }
 
     private Color getBorderColor() {
+        Color borderColor = option.getBorderColor();
         if (borderColor != null) {
             return borderColor;
         }

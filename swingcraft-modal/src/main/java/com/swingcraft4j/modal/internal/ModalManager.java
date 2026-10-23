@@ -39,6 +39,8 @@ public final class ModalManager {
             throw new IllegalArgumentException("id '" + id + "' already exist");
         }
         ModalOption copy = option.copy();
+        // what depends on the look and feel, as it is now
+        copy.updateTheme();
         RootPaneContainer window = getWindow(owner);
         // relative to the window, or next to it, is the same as not relative
         boolean relative = copy.isRelativeToOwner() || copy.getAnchorSide() != null;

@@ -638,6 +638,22 @@ public final class ModalContainer extends JComponent implements ModalController 
         return inputBlocker == null;
     }
 
+    /**
+     * The look and feel changed while the modal is open: the colors and the sizes of the option that depend
+     * on it are set again, by its theme updater. The border reads them when it is painted; a border width
+     * changes the size of the panel.
+     */
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        // not while the fields are set in the constructor
+        if (option != null && option.getThemeUpdater() != null) {
+            option.updateTheme();
+            revalidate();
+            repaint();
+        }
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         Snapshot background = getBackgroundSnapshot();

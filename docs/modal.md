@@ -349,6 +349,30 @@ As relative to owner, the modal follows the owner, hides with it and closes when
 | `setBorderWidth(int)`      | `0`      | The width of the outline                                             |
 | `setBorderColor(Color)`    | `null`   | Null for the border color of the look and feel                       |
 
+### A change of the look and feel
+
+A color given to the option is the color of the look and feel when the option was made: a modal that is open
+while the look and feel changes (from a dark to a light theme) keeps it. The values left null follow the look
+and feel by themselves. For the others, give the option a theme updater: it sets them again on the option of
+the open modal when the look and feel changes, and the modal is laid out and painted again. It also runs once
+when the modal is shown, so what depends on the look and feel is set only there.
+
+```java
+ModalOption option = JModal.createOption()
+        .setBackgroundOpacity(0.5f)
+        .setThemeUpdater(o -> o
+                .setBackgroundColor(UIManager.getColor("Panel.background"))
+                .setBorderColor(UIManager.getColor("Component.focusColor"))
+                .setBorderWidth(FlatLaf.isLafDark() ? 1 : 0));
+```
+
+| Setter                                  | Default | What it does                                                |
+|-----------------------------------------|---------|-------------------------------------------------------------|
+| `setThemeUpdater(Consumer<ModalOption>)` | `null`  | Sets what depends on the look and feel, when the modal is shown and when the look and feel changes |
+
+The modal is updated when its components are: with `FlatLaf.updateUI()` or `SwingUtilities.updateComponentTreeUI`
+of its window.
+
 ## Animation
 
 `AnimationOption` sets how a modal is shown, closed, pushed and popped. Get it from the option. The

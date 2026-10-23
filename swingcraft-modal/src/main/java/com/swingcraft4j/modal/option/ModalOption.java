@@ -1,6 +1,7 @@
 package com.swingcraft4j.modal.option;
 
 import java.awt.*;
+import java.util.function.Consumer;
 
 /**
  * The options of a modal: background, layout and border, and the animation in its own
@@ -8,7 +9,8 @@ import java.awt.*;
  * All sizes are unscaled and get scaled with the UI scale factor.
  * <p>
  * The option is copied when the modal is shown, so changing it afterwards
- * does not affect the modals already open.
+ * does not affect the modals already open. To follow a change of the look and feel while a modal is
+ * open, see {@link #setThemeUpdater}.
  */
 public class ModalOption {
 
@@ -40,6 +42,9 @@ public class ModalOption {
     private float shadowOpacity = -1;
     private int borderWidth = 0;
     private Color borderColor;
+
+    // sets again what depends on the look and feel
+    private Consumer<ModalOption> themeUpdater;
 
     public BackgroundMode getBackgroundMode() {
         return backgroundMode;
@@ -360,6 +365,38 @@ public class ModalOption {
         return this;
     }
 
+    public Consumer<ModalOption> getThemeUpdater() {
+        return themeUpdater;
+    }
+
+    /**
+     * Colors taken from the look and feel when the option is made stay those of the look and feel of
+     * then: a modal that is open while the look and feel changes (a dark and a light theme) would keep
+     * them. The updater sets them again on the option of the open modal, which is then laid out and
+     * painted again. It is also run once when the modal is shown, so what depends on the look and feel
+     * can be set only there:
+     * <pre>
+     * option.setThemeUpdater(o -&gt; o
+     *         .setBackgroundColor(UIManager.getColor("Panel.background"))
+     *         .setBorderWidth(FlatLaf.isLafDark() ? 1 : 0));
+     * </pre>
+     *
+     * @param themeUpdater sets the colors and the sizes that depend on the look and feel, or null
+     */
+    public ModalOption setThemeUpdater(Consumer<ModalOption> themeUpdater) {
+        this.themeUpdater = themeUpdater;
+        return this;
+    }
+
+    /**
+     * Runs the {@link #setThemeUpdater theme updater} on this option, if there is one.
+     */
+    public void updateTheme() {
+        if (themeUpdater != null) {
+            themeUpdater.accept(this);
+        }
+    }
+
     public ModalOption copy() {
         ModalOption option = new ModalOption();
         option.backgroundMode = backgroundMode;
@@ -384,6 +421,7 @@ public class ModalOption {
         option.shadowOpacity = shadowOpacity;
         option.borderWidth = borderWidth;
         option.borderColor = borderColor;
+        option.themeUpdater = themeUpdater;
         return option;
     }
 }
