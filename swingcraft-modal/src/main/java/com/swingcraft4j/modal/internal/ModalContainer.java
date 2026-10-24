@@ -15,6 +15,7 @@ import java.awt.event.HierarchyBoundsAdapter;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayDeque;
@@ -248,6 +249,13 @@ public final class ModalContainer extends JComponent implements ModalController 
     }
 
     /**
+     * @return true if the background blocks the whole window, and so its menu bar too (see {@link MenuBarBlocker})
+     */
+    boolean blocksMenuBar() {
+        return option.getBackgroundMode().isBlocking() && option.isBlockMenuBar() && (owner == null || isAnchored());
+    }
+
+    /**
      * @return the area this modal covers, in the layer of the window: the visible part of the owner, or the
      * whole layer. In a window of its own the modal covers the same area, the window is placed over it
      */
@@ -295,6 +303,9 @@ public final class ModalContainer extends JComponent implements ModalController 
         if (option.getBackgroundMode().isBlocking()) {
             // the background fades
             repaint();
+            if (blocksMenuBar()) {
+                root.getMenuBarBlocker().repaint();
+            }
         } else {
             // nothing but the modal changes, do not paint the components behind the rest of the area
             panel.repaint();
@@ -654,25 +665,83 @@ public final class ModalContainer extends JComponent implements ModalController 
         }
     }
 
+    /**
+     * The keys of the menu bar for the whole window (the mnemonic of a menu, the accelerator of an item, F10)
+     * would reach the menu bar behind the blocking background, also when the focus is in the modal. The
+     * container is an ancestor of the focus owner, and its key bindings are processed before those for the
+     * whole window: a key of the menu bar stops here, and only the components of the modal get it.
+     */
+    @Override
+    protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
+        if (super.processKeyBinding(ks, e, condition, pressed)) {
+            return true;
+        }
+        if (condition != WHEN_ANCESTOR_OF_FOCUSED_COMPONENT || host.isWindow()) {
+            return false;
+        }
+        MenuBarBlocker menuBarBlocker = root.getMenuBarBlocker();
+        if (!menuBarBlocker.isBlocked() || !menuBarBlocker.isMenuBarKey(ks)) {
+            return false;
+        }
+        processWindowKeyBinding(panel, ks, e);
+        e.consume();
+        return true;
+    }
+
+    /**
+     * Gives the key to the binding for the whole window of a component of the modal, as the mnemonic of a
+     * button or a label, if one has it.
+     */
+    private static boolean processWindowKeyBinding(Component component, KeyStroke ks, KeyEvent e) {
+        if (!component.isShowing() || !component.isEnabled()) {
+            return false;
+        }
+        if (component instanceof JComponent) {
+            JComponent c = (JComponent) component;
+            InputMap inputMap = c.getInputMap(WHEN_IN_FOCUSED_WINDOW);
+            Object key = inputMap.get(ks);
+            Action action = key != null ? c.getActionMap().get(key) : null;
+            if (action != null && SwingUtilities.notifyAction(action, ks, e, c, e.getModifiers())) {
+                return true;
+            }
+        }
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                if (processWindowKeyBinding(child, ks, e)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         Snapshot background = getBackgroundSnapshot();
         if (background != null) {
             background.paint(g, 0, 0);
         }
-        float opacity = option.getBackgroundOpacity() * progress;
-        if (host.isWindow()) {
-            // the mouse goes through the parts of a transparent window where nothing is painted
-            opacity = Math.max(opacity, WINDOW_MINIMUM_OPACITY);
-        }
-        if (option.getBackgroundMode().isBlocking() && opacity > 0) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            Color color = option.getBackgroundColor();
+        if (option.getBackgroundMode().isBlocking()) {
             Rectangle area = layout.getArea(this);
-            g2.setColor(color != null ? color : Color.BLACK);
-            g2.setComposite(AlphaComposite.SrcOver.derive(Math.min(opacity, 1f)));
-            g2.fillRect(area.x, area.y, area.width, area.height);
-            g2.dispose();
+            // the mouse goes through the parts of a transparent window where nothing is painted
+            paintBackground(g, area.x, area.y, area.width, area.height, host.isWindow() ? WINDOW_MINIMUM_OPACITY : 0);
         }
+    }
+
+    /**
+     * Paints the blocking background over the rectangle, as far as the modal is shown. Also over the menu bar,
+     * by the {@link MenuBarBlocker}.
+     */
+    void paintBackground(Graphics g, int x, int y, int width, int height, float minimumOpacity) {
+        float opacity = Math.max(option.getBackgroundOpacity() * progress, minimumOpacity);
+        if (opacity <= 0) {
+            return;
+        }
+        Graphics2D g2 = (Graphics2D) g.create();
+        Color color = option.getBackgroundColor();
+        g2.setColor(color != null ? color : Color.BLACK);
+        g2.setComposite(AlphaComposite.SrcOver.derive(Math.min(opacity, 1f)));
+        g2.fillRect(x, y, width, height);
+        g2.dispose();
     }
 }

@@ -262,6 +262,15 @@ JModal.show(owner, modal, option);
 | `setBackgroundColor(Color)`    | `null`           | The color painted over the window, null for black               |
 | `setBackgroundOpacity(float)`  | `0.4f`           | From 0 (not visible, but still blocking) to 1                   |
 | `setCloseOnEscape(boolean)`    | `true`           | The escape key closes the modal                                 |
+| `setBlockMenuBar(boolean)`     | `true`           | Blocks the menu bar of the window too, see below                |
+
+With a blocking background (`CLOSE_ON_CLICK` or `BLOCK`) over the whole window, the menu bar of the window is
+blocked too: a click on it, its mnemonics and accelerators, F10 and the Alt key that selects the first menu. The
+keys of the modal itself (the mnemonic of a button) still work. The row of the menu bar is covered with the
+background: when FlatLaf embeds the menu bar in the title bar, or with its full window content
+(`FlatClientProperties.FULL_WINDOW_CONTENT`), that is the title bar too. Only the menu bar is blocked: the window
+can still be moved, minimized and closed. A modal over its owner component (`setRelativeToOwner(true)`) never blocks the
+menu bar. `setBlockMenuBar(false)` leaves the menu bar usable.
 
 | `BackgroundMode` | What it does                                                                                 |
 |------------------|----------------------------------------------------------------------------------------------|

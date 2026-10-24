@@ -26,6 +26,7 @@ final class ModalRoot {
 
     private final RootPaneContainer window;
     private final ModalLayer layer;
+    private final MenuBarBlocker menuBarBlocker;
     // the top modal first. The modals with a window of their own are over the modals in the layer
     private final List<ModalContainer> containers = new ArrayList<>();
     private final AWTEventListener outsideClickListener;
@@ -46,6 +47,7 @@ final class ModalRoot {
     private ModalRoot(RootPaneContainer window) {
         this.window = window;
         layer = new ModalLayer(this, window);
+        menuBarBlocker = new MenuBarBlocker(this, window);
         outsideClickListener = event -> {
             if (event.getID() == MouseEvent.MOUSE_PRESSED) {
                 mousePressed((MouseEvent) event);
@@ -60,6 +62,7 @@ final class ModalRoot {
     }
 
     private void uninstall() {
+        menuBarBlocker.uninstall();
         layer.uninstall();
         window.getRootPane().putClientProperty(CLIENT_PROPERTY, null);
         ModalManager.rootUninstalled(this);
@@ -71,6 +74,10 @@ final class ModalRoot {
      */
     ModalLayer getLayer() {
         return layer;
+    }
+
+    MenuBarBlocker getMenuBarBlocker() {
+        return menuBarBlocker;
     }
 
     ComponentOrientation getComponentOrientation() {
@@ -121,6 +128,7 @@ final class ModalRoot {
         }
         containers.add(index, container);
         updateOutsideClickListener();
+        menuBarBlocker.update();
     }
 
     /**
@@ -129,6 +137,7 @@ final class ModalRoot {
     void containerRemoved(ModalContainer container) {
         containers.remove(container);
         updateOutsideClickListener();
+        menuBarBlocker.update();
         if (containers.isEmpty()) {
             uninstall();
         }

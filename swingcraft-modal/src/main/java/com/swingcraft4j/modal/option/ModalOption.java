@@ -19,6 +19,7 @@ public class ModalOption {
     private Color backgroundColor;
     private float backgroundOpacity = 0.4f;
     private boolean closeOnEscape = true;
+    private boolean blockMenuBar = true;
 
     // layout
     private Surface surface = Surface.LAYER;
@@ -60,6 +61,10 @@ public class ModalOption {
 
     public boolean isCloseOnEscape() {
         return closeOnEscape;
+    }
+
+    public boolean isBlockMenuBar() {
+        return blockMenuBar;
     }
 
     public Surface getSurface() {
@@ -164,6 +169,16 @@ public class ModalOption {
 
     public ModalOption setCloseOnEscape(boolean closeOnEscape) {
         this.closeOnEscape = closeOnEscape;
+        return this;
+    }
+
+    /**
+     * @param blockMenuBar true (default) to cover and block the menu bar of the window too, with its keys
+     *                     (mnemonics, accelerators, the Alt key), when the background is blocking and covers
+     *                     the whole window. A modal over an owner component never blocks the menu bar
+     */
+    public ModalOption setBlockMenuBar(boolean blockMenuBar) {
+        this.blockMenuBar = blockMenuBar;
         return this;
     }
 
@@ -403,6 +418,7 @@ public class ModalOption {
         option.backgroundColor = backgroundColor;
         option.backgroundOpacity = backgroundOpacity;
         option.closeOnEscape = closeOnEscape;
+        option.blockMenuBar = blockMenuBar;
         option.surface = surface;
         option.horizontalLocation = horizontalLocation;
         option.verticalLocation = verticalLocation;
