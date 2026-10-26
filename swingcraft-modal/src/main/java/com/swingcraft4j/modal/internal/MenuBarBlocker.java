@@ -1,5 +1,6 @@
 package com.swingcraft4j.modal.internal;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.swingcraft4j.modal.option.BackgroundMode;
 
 import javax.swing.*;
@@ -253,6 +254,10 @@ final class MenuBarBlocker {
                     pressed = false;
                 }
             });
+            // FlatLaf takes a component with a mouse listener in the title bar as not a part of the caption, by its
+            // bounds and not by contains, so the whole row could not move the window. The menu bar under the cover
+            // is still not a part of it
+            putClientProperty(FlatClientProperties.COMPONENT_TITLE_BAR_CAPTION, true);
         }
 
         /**

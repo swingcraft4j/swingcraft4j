@@ -1,5 +1,6 @@
 package com.swingcraft4j.modal.internal;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.util.Animator;
 import com.swingcraft4j.modal.Modal;
 import com.swingcraft4j.modal.ModalController;
@@ -22,6 +23,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * One open modal: the background that covers the window (or the owner) and the modal panel on top of it.
@@ -118,6 +120,10 @@ public final class ModalContainer extends JComponent implements ModalController 
                 pressed = false;
             }
         });
+        // FlatLaf takes a component with a mouse listener in the title bar as not a part of the caption, by its
+        // bounds and not by contains. With the full window content the background is over the title bar: null
+        // lets the children tell, so the window can still be moved there and only the modal itself gets the mouse
+        putClientProperty(FlatClientProperties.COMPONENT_TITLE_BAR_CAPTION, (Function<Point, Boolean>) point -> null);
     }
 
     /**
