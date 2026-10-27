@@ -407,6 +407,7 @@ or `GRADIENT` (the color fades out from the leading side).
 | `setMaxWidth(int)`             | `0`     | The largest width of a toast with a message, 0 for no limit             |
 | `setShowIcon(boolean)`         | `true`  | Shows the icon                                                          |
 | `setIcon(Icon)`                | `null`  | The icon in place of the icon of the type                               |
+| `setIconSize(int)`             | `18`    | The size of the icon of the type, also of the loading icon. Not for an icon of `setIcon` |
 | `setIconSeparateLine(boolean)` | `false` | Shows a line between the icon and the text                              |
 | `setShowLabel(boolean)`        | `false` | Shows a label above the message, the name of the type                   |
 | `setLabel(String)`             | `null`  | The text of the label in place of the name of the type                  |

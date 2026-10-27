@@ -85,6 +85,7 @@ public class ToastDemo extends JPanel {
     private JTextField label;
     private JSpinner padding;
     private JSpinner maxWidth;
+    private JSpinner iconSize;
 
     private JLabel labelEvent;
 
@@ -273,6 +274,8 @@ public class ToastDemo extends JPanel {
         padding = DemoUtils.createSpinner(5, 0, 50, 1);
         maxWidth = DemoUtils.createSpinner(0, 0, 2000, 10);
         maxWidth.setToolTipText("0 for no limit");
+        iconSize = DemoUtils.createSpinner(18, 8, 48, 1);
+        iconSize.setToolTipText("The size of the icon of the type");
         progressLinePosition = new JComboBox<>(ProgressLinePosition.values());
         progressLinePosition.setSelectedItem(ProgressLinePosition.BOTTOM);
         progressLineColor = new ColorOption();
@@ -287,6 +290,7 @@ public class ToastDemo extends JPanel {
         DemoUtils.addRow(panel, "Label", label);
         DemoUtils.addRow(panel, "Padding", padding);
         DemoUtils.addRow(panel, "Max width", maxWidth);
+        DemoUtils.addRow(panel, "Icon size", iconSize);
         DemoUtils.addRow(panel, "Progress line", progressLinePosition);
         DemoUtils.addRow(panel, "Progress color", progressLineColor);
         return panel;
@@ -367,6 +371,7 @@ public class ToastDemo extends JPanel {
                 .setMaxWidth(DemoUtils.intValue(maxWidth))
                 .setShowIcon(chShowIcon.isSelected())
                 .setIcon(chCustomIcon.isSelected() ? UIManager.getIcon("FileView.floppyDriveIcon") : null)
+                .setIconSize(DemoUtils.intValue(iconSize))
                 .setIconSeparateLine(chIconSeparateLine.isSelected())
                 .setShowLabel(chShowLabel.isSelected())
                 .setLabel(labelText.isEmpty() ? null : labelText)

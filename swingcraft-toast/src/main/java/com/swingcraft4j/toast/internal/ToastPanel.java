@@ -139,7 +139,7 @@ public final class ToastPanel extends JPanel implements ToastController {
         StyleOption style = option.getStyleOption();
         Icon icon = null;
         if (style.isShowIcon()) {
-            icon = style.getIcon() != null ? style.getIcon() : ToastIcon.of(type, getColor());
+            icon = style.getIcon() != null ? style.getIcon() : ToastIcon.of(type, getColor(), style.getIconSize());
         }
         // the line is between the icon and the text, so only when there are both
         boolean hasText = style.isShowLabel() || (message != null && !message.isEmpty());

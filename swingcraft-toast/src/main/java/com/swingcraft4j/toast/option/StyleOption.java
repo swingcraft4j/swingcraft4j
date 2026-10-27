@@ -27,6 +27,7 @@ public class StyleOption {
     private int maxWidth;
     private boolean showIcon = true;
     private Icon icon;
+    private int iconSize = 18;
     private boolean iconSeparateLine;
     private boolean showLabel;
     private String label;
@@ -83,6 +84,10 @@ public class StyleOption {
 
     public Icon getIcon() {
         return icon;
+    }
+
+    public int getIconSize() {
+        return iconSize;
     }
 
     public boolean isIconSeparateLine() {
@@ -248,6 +253,18 @@ public class StyleOption {
     }
 
     /**
+     * @param iconSize the width and height of the icon of the type, also of the loading icon. Not used for an
+     *                 icon set with {@link #setIcon(Icon)}, which has its own size
+     */
+    public StyleOption setIconSize(int iconSize) {
+        if (iconSize <= 0) {
+            throw new IllegalArgumentException("icon size must be > 0");
+        }
+        this.iconSize = iconSize;
+        return this;
+    }
+
+    /**
      * @param iconSeparateLine true to show a line between the icon and the text. A toast without icon
      *                         or without text has no line
      */
@@ -339,6 +356,7 @@ public class StyleOption {
         option.maxWidth = maxWidth;
         option.showIcon = showIcon;
         option.icon = icon;
+        option.iconSize = iconSize;
         option.iconSeparateLine = iconSeparateLine;
         option.showLabel = showLabel;
         option.label = label;

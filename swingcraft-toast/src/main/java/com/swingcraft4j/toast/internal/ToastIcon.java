@@ -25,21 +25,24 @@ final class ToastIcon implements Icon {
     // null for the close icon
     private final ToastType type;
     private final Color color;
+    // unscaled, scaled with the UI scale when painted
+    private final int size;
 
     /**
      * @return the icon of the type in the color, or null for a type without icon
      */
-    static ToastIcon of(ToastType type, Color color) {
-        return type == ToastType.DEFAULT ? null : new ToastIcon(type, color);
+    static ToastIcon of(ToastType type, Color color, int size) {
+        return type == ToastType.DEFAULT ? null : new ToastIcon(type, color, size);
     }
 
     static ToastIcon close() {
-        return new ToastIcon(null, null);
+        return new ToastIcon(null, null, CLOSE_SIZE);
     }
 
-    private ToastIcon(ToastType type, Color color) {
+    private ToastIcon(ToastType type, Color color, int size) {
         this.type = type;
         this.color = color;
+        this.size = size;
     }
 
     @Override
@@ -50,6 +53,11 @@ final class ToastIcon implements Icon {
             g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
             g2.translate(x, y);
             UIScale.scaleGraphics(g2);
+            if (type != null && size != SIZE) {
+                // the shapes are made for the size SIZE
+                float scale = size / (float) SIZE;
+                g2.scale(scale, scale);
+            }
             if (type == null) {
                 paintClose(g2);
             } else if (type == ToastType.LOADING) {
@@ -140,11 +148,11 @@ final class ToastIcon implements Icon {
 
     @Override
     public int getIconWidth() {
-        return UIScale.scale(type == null ? CLOSE_SIZE : SIZE);
+        return UIScale.scale(size);
     }
 
     @Override
     public int getIconHeight() {
-        return UIScale.scale(type == null ? CLOSE_SIZE : SIZE);
+        return UIScale.scale(size);
     }
 }
