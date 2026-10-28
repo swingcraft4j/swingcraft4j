@@ -384,7 +384,7 @@ of its window.
 
 ## Animation
 
-`AnimationOption` sets how a modal is shown, closed, pushed and popped. Get it from the option. The
+`AnimationOption` sets how a modal is shown, closed, pushed, popped and resized. Get it from the option. The
 animation is off by default, turn it on with `setEnabled(true)`.
 
 ```java
@@ -400,6 +400,7 @@ option.getAnimationOption()
 | `setEnabled(boolean)`    | `false` | True to animate the modal, false for no animation at all                    |
 | `setDuration(int)`       | `200`   | The time in milliseconds to show or close the modal, 0 for no animation     |
 | `setSlideDuration(int)`  | `300`   | The time in milliseconds to slide to the pushed or popped modal             |
+| `setResizeDuration(int)` | `200`   | The time in milliseconds to change the size of the open modal, see below    |
 | `setOffset(x, y)`        | `0, 20` | Where the modal starts, from its location. It moves from there to its place |
 | `setFade(boolean)`       | `true`  | Fades the modal in and out                                                  |
 | `setScale(float)`        | `0`     | How much smaller the modal starts, from 0 to less than 1                    |
@@ -414,6 +415,14 @@ to `0, 0` for a zoom only.
 **Snapshot.** The window behind the modal is painted again for each frame while the background fades. That is
 slow for a window with many components. With a snapshot the window is painted once and its image is animated:
 faster, but the window behind does not change during the animation. A `WINDOW` modal does not need it.
+
+**Resize.** When the content of an open modal needs another size, as when a part of a form is shown or
+hidden and the form calls `revalidate()`, the modal grows or gets smaller to it. Its components are at their
+new place from the start. When the window is resized the modal follows it at once. 0 for no animation.
+
+**Size of the content.** Before the modal is shown, and before it changes its size, it is laid out and painted
+once, until its size stays the same: a label with HTML text wraps it only when it is painted, and the modal
+would change its size a second time otherwise. This is done also without animation.
 
 **Images.** Fade, scale and snapshot animate an image of the modal, and the real components are painted
 again when the animation ends. On a screen with a scale that is not a whole number (125%, 150%) the border

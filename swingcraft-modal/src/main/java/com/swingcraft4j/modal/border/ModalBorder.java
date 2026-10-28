@@ -85,10 +85,9 @@ public class ModalBorder extends AbstractBorder {
         int blur = Math.min((left + right) / 2, (top + bottom) / 2);
         float opacity = getShadowOpacity();
         if (blur > 0 && opacity > 0) {
-            Image image = shadowRenderer.getShadow(bw, bh, arc, blur, getShadowColor(), opacity);
             int offsetX = (right - left) / 2;
             int offsetY = (bottom - top) / 2;
-            g.drawImage(image, bx - blur + offsetX, by - blur + offsetY, null);
+            shadowRenderer.paintShadow(g, bx - blur + offsetX, by - blur + offsetY, bw, bh, arc, blur, getShadowColor(), opacity);
         }
 
         // paint background

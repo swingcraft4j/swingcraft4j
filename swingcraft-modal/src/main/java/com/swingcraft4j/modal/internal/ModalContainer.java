@@ -19,6 +19,7 @@ import java.awt.event.HierarchyListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -54,7 +55,15 @@ public final class ModalContainer extends JComponent implements ModalController 
     private final Deque<Modal> modals = new ArrayDeque<>();
     private final ProgressAnimation showAnimation = new ProgressAnimation();
     private final ProgressAnimation slideAnimation = new ProgressAnimation();
+    private final ProgressAnimation resizeAnimation = new ProgressAnimation();
     private State state = State.CREATED;
+    // while the size of the open modal is animated: the bounds of the panel it comes from, relative to the area,
+    // and the size it goes to
+    private Rectangle resizeFrom;
+    private Dimension resizeTo;
+    // the size of the area at the last layout: when the area changes, the modal follows it without animation
+    private Dimension areaSize;
+    private boolean checkingResize;
     private float progress;
     private JComponent inputBlocker;
     // an image of what is behind this modal, painted in place of the real components while animating
@@ -389,9 +398,160 @@ public final class ModalContainer extends JComponent implements ModalController 
 
     @Override
     public void doLayout() {
+        checkResize();
         super.doLayout();
         if (inputBlocker != null) {
             inputBlocker.setBounds(panel.getBounds());
+        }
+    }
+
+    /**
+     * The content of the open modal needs another size, as when a part of a form is shown or hidden: the panel
+     * goes from its bounds to the new ones with an animation. Not when the area changed, as when the window is
+     * resized: the modal follows the area at once.
+     */
+    private void checkResize() {
+        if (checkingResize) {
+            return;
+        }
+        checkingResize = true;
+        try {
+            Rectangle area = layout.getArea(this);
+            boolean areaChanged = areaSize != null && !areaSize.equals(area.getSize());
+            areaSize = area.getSize();
+            if (areaChanged) {
+                resizeAnimation.finish();
+                return;
+            }
+            if (state != State.OPENED || panel.isSliding() || panel.getWidth() <= 0 || panel.getHeight() <= 0) {
+                return;
+            }
+            // the size the panel has, or goes to
+            Dimension size = resizeAnimation.isRunning() ? resizeTo : panel.getSize();
+            Dimension target = layout.getTargetBounds(this).getSize();
+            if (target.equals(size)) {
+                return;
+            }
+            // what was shown changes its size once it is painted, as a label with HTML: without this the modal
+            // would change its size a second time, or a second resize would start when the first one is under way
+            target = settleTargetSize(target);
+            if (target.equals(size)) {
+                return;
+            }
+            int duration = getDuration(option.getAnimationOption().getResizeDuration());
+            if (duration <= 0) {
+                resizeAnimation.finish();
+                return;
+            }
+            // from where the panel is now, also when it is in the middle of another resize
+            resizeFrom = panel.getBounds();
+            resizeFrom.translate(-area.x, -area.y);
+            resizeTo = target;
+            layout.setResize(resizeFrom, 0);
+            panel.setModalSize(panel.getModalSize(target));
+            if (host.isWindow()) {
+                // later, not inside the layout of the window: the window gets large enough for both sizes
+                SwingUtilities.invokeLater(() -> {
+                    if (resizeAnimation.isRunning()) {
+                        host.updateBounds(this);
+                    }
+                });
+            }
+            resizeAnimation.start(duration, 0, 1, this::setResizeProgress, this::resized);
+        } finally {
+            checkingResize = false;
+        }
+    }
+
+    private void setResizeProgress(float progress) {
+        layout.setResize(resizeFrom, progress);
+        doLayout();
+        panel.validate();
+    }
+
+    private void resized() {
+        resizeFrom = null;
+        resizeTo = null;
+        layout.setResize(null, 1);
+        panel.setModalSize(null);
+        // a window of its own gets the size of the modal again
+        host.updateBounds(this);
+        doLayout();
+        panel.validate();
+    }
+
+    /**
+     * Lays the modal out at the size it is shown in, and paints it once to an image, until its size stays the
+     * same. The height of some components follows their width, which they only know after that: a label with
+     * HTML wraps its text when it is painted. Measured before, the modal would be too small while it opens,
+     * and grow at the end of the animation.
+     */
+    private void settleSize() {
+        for (int i = 0; i < 3; i++) {
+            if (!panel.isDisplayable() || layout.getArea(this).isEmpty()) {
+                return;
+            }
+            Dimension size = panel.getPreferredSize();
+            doLayout();
+            panel.validate();
+            if (!paintToMeasure(modals.peek()) || size.equals(panel.getPreferredSize())) {
+                return;
+            }
+        }
+    }
+
+    /**
+     * The same as {@link #settleSize()} for the open modal that changes its size: the modal is laid out at the
+     * size it goes to, while the panel stays where it is.
+     *
+     * @param target the size of the panel the modal needs, as measured before it was painted
+     * @return the size of the panel the modal needs
+     */
+    private Dimension settleTargetSize(Dimension target) {
+        Modal modal = modals.peek();
+        for (int i = 0; i < 3; i++) {
+            modal.setSize(panel.getModalSize(target));
+            modal.validate();
+            if (!paintToMeasure(modal)) {
+                break;
+            }
+            Dimension size = layout.getTargetBounds(this).getSize();
+            if (size.equals(target)) {
+                break;
+            }
+            target = size;
+        }
+        return target;
+    }
+
+    /**
+     * Paints the modal to an image that is not used, so its components know their size, and lets the layouts
+     * measure them again.
+     *
+     * @return false if the modal has no size
+     */
+    private static boolean paintToMeasure(Modal modal) {
+        if (modal.getWidth() <= 0 || modal.getHeight() <= 0) {
+            return false;
+        }
+        BufferedImage image = new BufferedImage(modal.getWidth(), modal.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        try {
+            modal.paint(g);
+        } finally {
+            g.dispose();
+        }
+        image.flush();
+        invalidateTree(modal);
+        return true;
+    }
+
+    private static void invalidateTree(Component component) {
+        component.invalidate();
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                invalidateTree(child);
+            }
         }
     }
 
@@ -403,10 +563,13 @@ public final class ModalContainer extends JComponent implements ModalController 
         }
         setProgress(0);
         host.addContainer(this);
+        settleSize();
         int duration = getDuration(option.getAnimationOption().getDuration());
         if (duration > 0 && usesSnapshot()) {
             // the image of the modal is made for the location where the modal ends, see Snapshot
             setProgress(1);
+            // the modal is painted at the size it has there
+            panel.validate();
             startSnapshot();
             setProgress(0);
         } else if (duration == 0) {
@@ -438,6 +601,8 @@ public final class ModalContainer extends JComponent implements ModalController 
      * @param popped  the modal that was removed from the stack, or null
      */
     private void slideToTopModal(boolean forward, Modal popped) {
+        // the slide goes from the size the modal ends with
+        resizeAnimation.finish();
         Modal modal = modals.peek();
         modal.applyComponentOrientation(getComponentOrientation());
         // a modal that is not completely open yet is changed without animation
@@ -528,6 +693,7 @@ public final class ModalContainer extends JComponent implements ModalController 
         if (!isOpen()) {
             return;
         }
+        resizeAnimation.finish();
         state = State.CLOSING;
         setInputBlocked(true);
         restoreFocus();

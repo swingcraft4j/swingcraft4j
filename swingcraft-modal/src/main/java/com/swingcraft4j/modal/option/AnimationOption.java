@@ -3,7 +3,7 @@ package com.swingcraft4j.modal.option;
 import java.awt.*;
 
 /**
- * How a modal is animated when it is shown, closed, pushed and popped. The setters return the option,
+ * How a modal is animated when it is shown, closed, pushed, popped and resized. The setters return the option,
  * so they can be chained. Get it from {@link ModalOption#getAnimationOption()}.
  */
 public class AnimationOption {
@@ -11,6 +11,7 @@ public class AnimationOption {
     private boolean enabled;
     private int duration = 200;
     private int slideDuration = 300;
+    private int resizeDuration = 200;
     private Point offset = new Point(0, 20);
     private boolean fade = true;
     private float scale;
@@ -26,6 +27,10 @@ public class AnimationOption {
 
     public int getSlideDuration() {
         return slideDuration;
+    }
+
+    public int getResizeDuration() {
+        return resizeDuration;
     }
 
     public Point getOffset() {
@@ -73,6 +78,21 @@ public class AnimationOption {
             throw new IllegalArgumentException("slide duration must be >= 0");
         }
         this.slideDuration = slideDuration;
+        return this;
+    }
+
+    /**
+     * The open modal changes its size when its content needs another size, as when a part of a form is shown
+     * or hidden. The components of the modal are at their new place from the start, and the modal grows or
+     * gets smaller around them.
+     *
+     * @param resizeDuration the time in milliseconds to change the size of the open modal, 0 for no animation
+     */
+    public AnimationOption setResizeDuration(int resizeDuration) {
+        if (resizeDuration < 0) {
+            throw new IllegalArgumentException("resize duration must be >= 0");
+        }
+        this.resizeDuration = resizeDuration;
         return this;
     }
 
@@ -146,6 +166,7 @@ public class AnimationOption {
         option.enabled = enabled;
         option.duration = duration;
         option.slideDuration = slideDuration;
+        option.resizeDuration = resizeDuration;
         option.offset = new Point(offset);
         option.fade = fade;
         option.scale = scale;

@@ -27,6 +27,9 @@ final class ModalPanel extends JPanel {
     private boolean slideForward;
     private float slideProgress;
 
+    // the size the modal is laid out in while the size of the panel is animated, null to fill the panel
+    private Dimension modalSize;
+
     // the image the modal is painted through in a transparent window
     private Snapshot buffer;
 
@@ -98,6 +101,26 @@ final class ModalPanel extends JPanel {
     }
 
     /**
+     * While the size of the panel is animated the modal keeps the size it ends with: its components are at
+     * their new place from the start, and the panel shows as much of it as fits.
+     *
+     * @param modalSize the size of the modal without the border, null to fill the panel again
+     */
+    void setModalSize(Dimension modalSize) {
+        this.modalSize = modalSize == null ? null : new Dimension(modalSize);
+        invalidate();
+    }
+
+    /**
+     * @return the size of the modal without the border, for a panel of the given size
+     */
+    Dimension getModalSize(Dimension panelSize) {
+        Insets insets = getInsets();
+        return new Dimension(Math.max(panelSize.width - (insets.left + insets.right), 0),
+                Math.max(panelSize.height - (insets.top + insets.bottom), 0));
+    }
+
+    /**
      * Paints the modal to an image, the image is painted in place of the modal until {@link #endSnapshot()}.
      */
     void startSnapshot() {
@@ -149,7 +172,11 @@ final class ModalPanel extends JPanel {
     public void doLayout() {
         Rectangle area = getModalArea();
         if (outgoing == null) {
-            if (modal != null) {
+            if (modal != null && modalSize != null) {
+                // at the leading side, what does not fit is cut off at the trailing side and the bottom
+                int x = getComponentOrientation().isLeftToRight() ? area.x : area.x + area.width - modalSize.width;
+                modal.setBounds(x, area.y, modalSize.width, modalSize.height);
+            } else if (modal != null) {
                 modal.setBounds(area);
             }
         } else {

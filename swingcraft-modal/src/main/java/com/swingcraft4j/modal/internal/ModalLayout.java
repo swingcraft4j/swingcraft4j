@@ -27,6 +27,10 @@ final class ModalLayout implements LayoutManager {
     private final Point offset = new Point();
     // 0 when the modal starts to show, 1 when it is at its location
     private float animationProgress = 1;
+    // where the panel was when its size started to change, relative to the area. Null when the size is not animated
+    private Rectangle resizeFrom;
+    // 0 when the size starts to change, 1 when the panel has its new size
+    private float resizeProgress = 1;
     // null for the whole container
     private Rectangle area;
     // the part of the screen a modal that leaves its area stays in, relative to the area. Null if not known
@@ -49,6 +53,24 @@ final class ModalLayout implements LayoutManager {
 
     void setAnimationProgress(float animationProgress) {
         this.animationProgress = animationProgress;
+    }
+
+    /**
+     * @param from     where the panel was when its size started to change, relative to the area. Null when the
+     *                 size is not animated
+     * @param progress 0 at the bounds it comes from, 1 at its new bounds
+     */
+    void setResize(Rectangle from, float progress) {
+        this.resizeFrom = from == null ? null : new Rectangle(from);
+        this.resizeProgress = progress;
+    }
+
+    /**
+     * @return the bounds of the panel relative to the area, where the panel goes when its size is animated
+     */
+    Rectangle getTargetBounds(Container parent) {
+        Rectangle area = getArea(parent);
+        return getPanelBounds(parent, area.width, area.height, screen, animationProgress, panel.getSlideProgress(), false);
     }
 
     /**
@@ -95,6 +117,14 @@ final class ModalLayout implements LayoutManager {
         synchronized (parent.getTreeLock()) {
             Rectangle area = getArea(parent);
             Rectangle bounds = getPanelBounds(parent, area.width, area.height, screen, animationProgress, panel.getSlideProgress(), true);
+            if (resizeFrom != null) {
+                // whole pixels, so the text of the modal stays sharp
+                bounds = new Rectangle(
+                        Math.round(resizeFrom.x + (bounds.x - resizeFrom.x) * resizeProgress),
+                        Math.round(resizeFrom.y + (bounds.y - resizeFrom.y) * resizeProgress),
+                        Math.round(resizeFrom.width + (bounds.width - resizeFrom.width) * resizeProgress),
+                        Math.round(resizeFrom.height + (bounds.height - resizeFrom.height) * resizeProgress));
+            }
             panel.setBounds(area.x + bounds.x, area.y + bounds.y, bounds.width, bounds.height);
         }
     }
@@ -113,6 +143,10 @@ final class ModalLayout implements LayoutManager {
                 Rectangle bounds = getPanelBounds(parent, areaWidth, areaHeight, screen, progress, slide, false);
                 reach = reach == null ? bounds : reach.union(bounds);
             }
+        }
+        if (resizeFrom != null) {
+            // the panel is between the bounds it comes from and its new bounds
+            reach = reach.union(resizeFrom);
         }
         return reach;
     }
